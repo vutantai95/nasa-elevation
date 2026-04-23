@@ -125,8 +125,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .layer-btn.active{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
 .layer-btn.label-btn{margin-left:6px;border-color:rgba(255,255,255,.1)}
 .layer-btn.label-btn.on{background:rgba(255,179,71,.15);border-color:rgba(255,179,71,.55);color:var(--warn)}
-.layer-btn.label-btn:not(.on){opacity:.55}
-.layer-btn.label-btn:not(.on):hover{opacity:1}
+
 
 /* error */
 .err-bar{display:none;padding:11px 16px;background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.22);border-radius:var(--rs);font-size:13px;color:var(--red)}
@@ -402,10 +401,10 @@ const LAYERS = {
   )
 };
 
-// Stadia Stamen Toner Labels — chỉ địa danh (không đường), chữ đen đậm có halo trắng, rõ trên satellite
+// ArcGIS World Boundaries and Places — chỉ địa danh, chữ trắng có outline đậm, rõ trên satellite
 const LABEL_OVERLAY = L.tileLayer(
-  'https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}{r}.png',
-  { maxZoom: 20, attribution: 'Stadia Maps', opacity: 1, zIndex: 10 }
+  'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 19, attribution: 'Esri', opacity: 1, zIndex: 10 }
 );
 
 let _labelsOn = false;
@@ -466,21 +465,22 @@ function initMap() {
 
   marker.on('dragend', e => {
     const p = e.target.getLatLng();
-    applyCoords(+p.lat.toFixed(6), +p.lng.toFixed(6), false);
+    applyCoords(+p.lat.toFixed(6), +p.lng.toFixed(6), false, true);
   });
 
   map.on('click', e => {
-    applyCoords(+e.latlng.lat.toFixed(6), +e.latlng.lng.toFixed(6), false);
+    applyCoords(+e.latlng.lat.toFixed(6), +e.latlng.lng.toFixed(6), false, true);
   });
 }
 
-function applyCoords(lat, lon, moveMap = true) {
+function applyCoords(lat, lon, moveMap = true, autoScan = false) {
   _lat = lat; _lon = lon;
   document.getElementById('coordInput').value = lat + '° N, ' + lon + '° E';
   document.getElementById('hint').innerHTML = '<span class="ok">✓</span> Lat: ' + lat + ' · Lon: ' + lon;
   if (marker) marker.setLatLng([lat, lon]);
   if (map && moveMap) map.setView([lat, lon], map.getZoom());
   else if (map) map.panTo([lat, lon]);
+  if (autoScan) doScan();
 }
 
 // ── GPS ──
@@ -545,7 +545,7 @@ function onInput(raw) {
   return true;
 }
 
-function setCoords(lat, lon) { applyCoords(lat, lon, true); }
+function setCoords(lat, lon) { applyCoords(lat, lon, true, true); }
 
 async function doPaste() {
   try {
