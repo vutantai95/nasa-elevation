@@ -126,6 +126,8 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .layer-btn.active{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
 .layer-btn.label-btn{margin-left:6px;border-color:rgba(255,255,255,.1)}
 .layer-btn.label-btn.on{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
+/* Invert label tiles: chữ tối → trắng, nền trắng → trong suốt */
+.label-tile-invert { filter: invert(1); }
 
 
 
@@ -403,13 +405,12 @@ const LAYERS = {
   )
 };
 
-// Label layer — Carto Dark Only Labels: chữ trắng/sáng trên nền trong suốt,
-// thiết kế cho nền tối như satellite, public CDN không cần token.
-// maxNativeZoom=13: chỉ hiện địa danh lớn (tỉnh, thành, quận…),
-// zoom cao hơn vẫn scale tile đó lên thay vì load tên đường mới
+// Label layer — Carto voyager_only_labels + CSS invert: đảo màu chữ tối → trắng,
+// chỉ hiện địa danh lớn (maxNativeZoom 13), rõ trên nền satellite tối
 const LABEL_TILE = L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
-  { maxZoom: 19, maxNativeZoom: 13, opacity: 1, subdomains: 'abcd' }
+  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
+  { maxZoom: 19, maxNativeZoom: 13, opacity: 1, subdomains: 'abcd',
+    className: 'label-tile-invert' }
 );
 let _labelLayer = LABEL_TILE;
 
