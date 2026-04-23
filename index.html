@@ -114,8 +114,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 /* map */
 .map-wrap{position:relative}
 #map{height:340px}
-.map-tip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);padding:5px 13px;background:rgba(8,9,12,.82);backdrop-filter:blur(8px);border:1px solid var(--bd);border-radius:20px;font-size:11px;color:var(--m);pointer-events:none;white-space:nowrap;z-index:1000;transition:opacity .4s}
-[data-theme="light"] .map-tip{background:rgba(240,242,247,.88)}
+.map-tip{display:none}
 .map-layer-btns{position:absolute;top:10px;right:10px;z-index:1000;display:flex;gap:4px;pointer-events:all}
 .map-gps-btn{position:absolute;bottom:10px;right:10px;z-index:1000;pointer-events:all;width:32px;height:32px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);transition:all .15s}
 .map-gps-btn:hover{color:#fff;border-color:var(--ac2);background:rgba(56,182,255,.15)}
@@ -143,7 +142,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 
 /* result */
 .res{display:block}.res.on{display:block}
-.res-hero{padding:26px 22px 24px;text-align:center;border-bottom:1px solid var(--bd);height:252px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.res-hero{padding:26px 22px 24px;text-align:center;border-bottom:1px solid var(--bd);min-height:252px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .loc-row{font-size:11.5px;color:var(--m);margin-bottom:5px;min-height:18px;display:flex;align-items:center;justify-content:center;gap:6px}
 .loc-spin{width:9px;height:9px;border:1.5px solid var(--m2);border-top-color:var(--m);border-radius:50%;animation:spin .7s linear infinite}
 .loc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--txt);margin-bottom:18px;line-height:1.3}
@@ -246,7 +245,6 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
           <circle cx="12" cy="12" r="8" opacity=".3"/>
         </svg>
       </button>
-      <div class="map-tip" id="mapTip">🖱 Click vào bản đồ để chọn tọa độ · Kéo ghim để di chuyển</div>
     </div>
   </div>
 
@@ -404,10 +402,10 @@ const LAYERS = {
   )
 };
 
-// Stamen/CartoDB light_only_labels — chữ đen có outline rõ trên satellite
+// Stadia Stamen Toner Labels — chỉ địa danh (không đường), chữ đen đậm có halo trắng, rõ trên satellite
 const LABEL_OVERLAY = L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
-  { maxZoom: 19, subdomains: 'abcd', attribution: 'CartoDB', opacity: 1, zIndex: 10 }
+  'https://tiles.stadiamaps.com/tiles/stamen_toner_labels/{z}/{x}/{y}{r}.png',
+  { maxZoom: 20, attribution: 'Stadia Maps', opacity: 1, zIndex: 10 }
 );
 
 let _labelsOn = false;
@@ -473,9 +471,6 @@ function initMap() {
 
   map.on('click', e => {
     applyCoords(+e.latlng.lat.toFixed(6), +e.latlng.lng.toFixed(6), false);
-    const tip = document.getElementById('mapTip');
-    tip.style.opacity = '0';
-    setTimeout(() => tip.style.opacity = '1', 2500);
   });
 }
 
