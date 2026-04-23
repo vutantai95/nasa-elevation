@@ -141,11 +141,12 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .loc-row{font-size:11.5px;color:var(--m);margin-bottom:5px;min-height:18px;display:flex;align-items:center;justify-content:center;gap:6px}
 .loc-spin{width:9px;height:9px;border:1.5px solid var(--m2);border-top-color:var(--m);border-radius:50%;animation:spin .7s linear infinite}
 .loc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--txt);margin-bottom:18px;line-height:1.3}
-.elev-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);margin-bottom:7px}
-.elev-num{font-family:'Syne',sans-serif;font-size:68px;font-weight:800;color:var(--ac);line-height:1;letter-spacing:-2px;text-shadow:0 0 48px rgba(61,255,160,.2);animation:pop .45s cubic-bezier(.34,1.56,.64,1)}
-@keyframes pop{from{opacity:0;transform:scale(.83)}to{opacity:1;transform:scale(1)}}
-.elev-unit{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--m);margin-left:3px}
-.elev-sub{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--m);margin-top:9px}
+.elev-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--m);margin-bottom:10px}
+.elev-display{display:flex;align-items:baseline;justify-content:center;gap:4px;line-height:1}
+.elev-num{font-family:'Syne',sans-serif;font-size:96px;font-weight:800;color:var(--ac);line-height:.92;letter-spacing:-4px;text-shadow:0 0 60px rgba(61,255,160,.25),0 0 120px rgba(61,255,160,.1);animation:pop .5s cubic-bezier(.34,1.56,.64,1);display:inline-block}
+@keyframes pop{from{opacity:0;transform:scale(.75) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.elev-unit{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--m);margin-left:2px;margin-bottom:6px}
+.elev-sub{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--m);margin-top:12px;letter-spacing:.3px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--bd)}
 .stat{padding:14px;border-right:1px solid var(--bd);text-align:center}
 .stat:last-child{border-right:none}
@@ -172,7 +173,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
   .stats{grid-template-columns:repeat(2,1fr)}
   .stat:nth-child(2){border-right:none}
   .stat:nth-child(3){border-top:1px solid var(--bd)}
-  .elev-num{font-size:52px}
+  .elev-num{font-size:72px;letter-spacing:-3px}
   .hdr-chip{display:none}
   .gps-btn span{display:none}
   .selectors-row{flex-direction:column}
@@ -247,9 +248,8 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
           <div class="selector-group">
             <span class="sel-label">Nguồn:</span>
             <div class="sel-pills">
-              <button class="sel-pill active" data-src="auto" onclick="setSrc('auto',this)">Tự động</button>
+              <button class="sel-pill active" data-src="open-meteo" onclick="setSrc('open-meteo',this)">Open-Meteo</button>
               <button class="sel-pill" data-src="open-elevation" onclick="setSrc('open-elevation',this)">Open-Elevation</button>
-              <button class="sel-pill" data-src="open-meteo" onclick="setSrc('open-meteo',this)">Open-Meteo</button>
             </div>
           </div>
           <!-- Dataset -->
@@ -322,7 +322,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
       <div class="loc-row" id="locRow"><span class="loc-spin"></span> Đang tìm tên khu vực...</div>
       <div class="loc-name" id="locName"></div>
       <div class="elev-lbl">Độ cao so với mực nước biển</div>
-      <div><span class="elev-num" id="elevNum">—</span><span class="elev-unit">m</span></div>
+      <div class="elev-display"><span class="elev-num" id="elevNum">—</span><span class="elev-unit">m</span></div>
       <div class="elev-sub" id="elevSub"></div>
       <div><span class="ds-badge" id="dsBadge">⬡ SRTM 30m</span></div>
     </div>
@@ -349,7 +349,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 // ── State ──
 let _lat = 20.8449, _lon = 106.6881;
 let map, marker, currentLayer;
-let _src = 'auto'; // 'auto' | 'open-elevation' | 'open-meteo'
+let _src = 'open-meteo'; // 'open-meteo' | 'open-elevation'
 let _ds = 'srtm30'; // 'srtm30' | 'srtm90' | 'aster' | 'mapzen'
 
 // ── Theme toggle ──
@@ -393,9 +393,9 @@ const LAYERS = {
   )
 };
 
-// Esri hybrid reference overlay — địa danh/đường phủ lên vệ tinh
+// Esri hybrid reference overlay — dùng World_Reference_Overlay (mới hơn, có tiếng Việt tốt hơn)
 const LABEL_OVERLAY = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}',
   { maxZoom: 19, attribution: 'Esri', opacity: 1, zIndex: 10 }
 );
 
@@ -593,12 +593,14 @@ async function fetchFromOpenMeteo(lat, lon) {
 }
 
 async function fetchElev(lat, lon) {
-  if (_src === 'open-elevation') return fetchFromOpenElevation(lat, lon);
-  if (_src === 'open-meteo') return fetchFromOpenMeteo(lat, lon);
-  // auto: try open-elevation first, fallback to open-meteo
-  try { return await fetchFromOpenElevation(lat, lon); } catch(e) {}
-  try { return await fetchFromOpenMeteo(lat, lon); } catch(e) {}
-  throw new Error('Không thể kết nối tất cả API. Vui lòng thử lại.');
+  // Open-Meteo là nguồn chính (ổn định, nhanh)
+  // Open-Elevation chỉ dùng khi người dùng chọn rõ
+  if (_src === 'open-elevation') {
+    try { return await fetchFromOpenElevation(lat, lon); } catch(e) {}
+    // fallback về Open-Meteo nếu Open-Elevation chết
+    return fetchFromOpenMeteo(lat, lon);
+  }
+  return fetchFromOpenMeteo(lat, lon);
 }
 
 // ── Reverse geocoding ──
@@ -642,7 +644,7 @@ async function doScan() {
   document.getElementById('locRow').innerHTML = '<span class="loc-spin"></span> Đang tìm tên khu vực...';
   document.getElementById('locName').textContent = '';
 
-  const srcName = { auto: 'Tự động', 'open-elevation': 'Open-Elevation', 'open-meteo': 'Open-Meteo' }[_src];
+  const srcName = { 'open-meteo': 'Open-Meteo', 'open-elevation': 'Open-Elevation' }[_src] || 'Open-Meteo';
   document.getElementById('ldTxt').textContent = 'Đang truy vấn ' + srcName + ' · ' + DS_INFO[_ds].label + '...';
 
   try {
