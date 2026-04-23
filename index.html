@@ -704,11 +704,18 @@ function clearSearch() {
   acClose();
 }
 
-function triggerSearch() {
+async function triggerSearch() {
   const val = document.getElementById('mapSearchInput').value.trim();
   if(!val) return;
-  acClose();
-  doScan();
+  // Nếu là tọa độ thì scan luôn
+  if(onInput(val)) { acClose(); doScan(); return; }
+  // Nếu đang có kết quả thì chọn đầu tiên
+  if(_acResults.length) { acSelect(0); return; }
+  // Chưa có kết quả thì search rồi chọn
+  acShowLoading();
+  const results = await acSearch(val);
+  if(results && results.length) { acRender(results); acSelect(0); }
+  else acShowEmpty(currentLang==='vi'?'Không tìm thấy địa danh':'No places found');
 }
 
 function onSearchInput(val) {
@@ -734,11 +741,18 @@ function onSearchKeydown(e) {
     if(e.key === 'ArrowDown') { e.preventDefault(); acMoveFocus(1); return; }
     if(e.key === 'ArrowUp')   { e.preventDefault(); acMoveFocus(-1); return; }
     if(e.key === 'Enter') {
-      if(_acFocusIdx >= 0) { e.preventDefault(); acSelect(_acFocusIdx); return; }
+      e.preventDefault();
+      if(_acFocusIdx >= 0) { acSelect(_acFocusIdx); return; }
+      // chọn kết quả đầu tiên nếu có
+      if(_acResults.length) { acSelect(0); return; }
       acClose();
+      return;
     }
   }
-  if(e.key === 'Enter') doScan();
+  if(e.key === 'Enter') {
+    e.preventDefault();
+    triggerSearch();
+  }
 }
 
 // Close dropdown when clicking elsewhere
