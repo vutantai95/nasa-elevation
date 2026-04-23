@@ -53,11 +53,18 @@ html, body {
 .top-search-area { position: absolute; z-index: 1000; top: 10px; left: 10px; display: flex; gap: 6px; pointer-events: none; }
 .top-search-area > * { pointer-events: auto; }
 .map-search { display: flex; align-items: center; padding: 0; height: 36px; }
-.map-search-icon { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: var(--ac); border-right: 1px solid var(--bd); cursor: pointer; transition: all .15s; border-radius: 8px 0 0 8px; }
-.map-search-icon:hover { background: var(--s2); color: var(--txt); }
-.map-search-icon svg { width: 14px; height: 14px; }
-.map-search-input { flex: 1; height: 34px; background: transparent; border: none; padding: 0 10px 0 8px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--txt); outline: none; min-width: 220px; border-radius: 0 8px 8px 0; }
+.map-search-input { flex: 1; height: 34px; background: transparent; border: none; padding: 0 6px 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--txt); outline: none; min-width: 190px; }
 .map-search-input::placeholder { color: var(--m2); }
+.map-search-actions { display: flex; align-items: center; border-left: 1px solid var(--bd); height: 34px; }
+.map-search-btn { width: 30px; height: 34px; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--m); transition: color .15s; flex-shrink: 0; }
+.map-search-btn:hover { color: var(--ac); }
+.map-search-btn.clear-btn { color: var(--m); }
+.map-search-btn.clear-btn:hover { color: var(--red); }
+.map-search-btn svg { width: 13px; height: 13px; pointer-events: none; }
+.map-search-btn.search-btn svg { width: 14px; height: 14px; }
+.map-search-btn.search-btn { color: var(--ac); border-radius: 0 8px 8px 0; }
+.map-search-btn.search-btn:hover { color: var(--txt); }
+.btn-sep { width: 1px; height: 16px; background: var(--bd); flex-shrink: 0; margin: 0 1px; }
 
 .icon-btn { width: 36px; height: 36px; border: 1px solid var(--bd); background: var(--s3); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--m); border-radius: 8px; transition: all .15s; }
 .icon-btn:hover { color: var(--ac); background: var(--s2); border-color: var(--bdh); }
@@ -66,7 +73,7 @@ html, body {
 #mapGpsBtn.locating svg { animation: spin .8s linear infinite; }
 
 /* 2. Location Presets */
-.map-presets { position: absolute; z-index: 1000; top: 54px; left: 10px; display: flex; gap: 4px; padding: 4px; max-width: calc(100vw - 20px); overflow-x: auto; pointer-events: all; }
+.map-presets { position: absolute; z-index: 999; top: 54px; left: 10px; display: flex; gap: 4px; padding: 4px; max-width: calc(100vw - 20px); overflow-x: auto; pointer-events: all; }
 .pre-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid transparent; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--txt); transition: all .14s; white-space: nowrap; }
 .pre-btn:hover { background: var(--s2); color: var(--ac); border-color: var(--bd); }
 
@@ -122,14 +129,46 @@ html, body {
 .meb-spin { width: 10px; height: 10px; border: 1.5px solid rgba(61,255,160,.2); border-top-color: var(--ac); border-radius: 50%; animation: spin .7s linear infinite; position: absolute; top: 10px; right: 12px; opacity: 0; transition: opacity .2s; }
 .map-elev-badge.loading .meb-spin { opacity: 1; }
 
-/* 6. Zoom Controls (Bottom Right) */
+/* 6. Zoom Controls (Bottom Right) - Cao ngang bảng Config */
 .map-zoom-cluster { position: absolute; z-index: 1000; bottom: 20px; right: 10px; display: flex; flex-direction: column; padding: 0; pointer-events: all; }
 .map-zoom-btn { width: 36px; height: 40px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--m); font-size: 18px; font-weight: 400; transition: all .15s; }
 .map-zoom-btn:hover { color: var(--txt); background: var(--s2); }
 .map-zoom-btn:first-child { border-bottom: 1px solid var(--bd); border-radius: 8px 8px 0 0; }
 .map-zoom-btn:last-child { border-radius: 0 0 8px 8px; }
 
-/* Global Toast */
+/* Autocomplete Dropdown */
+.search-wrap { position: relative; display: flex; align-items: center; z-index: 1100; }
+.ac-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0;
+  min-width: 300px; max-width: 420px;
+  background: var(--s1); border: 1px solid var(--bdh);
+  border-radius: var(--r); box-shadow: 0 8px 32px var(--shadow);
+  overflow: hidden; z-index: 1200;
+  display: none; flex-direction: column;
+  max-height: 280px; overflow-y: auto;
+}
+.ac-dropdown.open { display: flex; }
+.ac-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 12px; cursor: pointer;
+  border-bottom: 1px solid var(--bd);
+  transition: background .12s;
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.focused { background: var(--s2); }
+.ac-icon { flex-shrink: 0; margin-top: 2px; color: var(--ac); }
+.ac-icon svg { width: 13px; height: 13px; }
+.ac-text { flex: 1; min-width: 0; }
+.ac-name { font-family: 'DM Sans', sans-serif; font-size: 12.5px; font-weight: 600; color: var(--txt); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ac-sub { font-family: 'DM Sans', sans-serif; font-size: 10.5px; color: var(--m); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ac-type { flex-shrink: 0; font-family: 'Syne', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--m2); background: var(--s2); border: 1px solid var(--bd); border-radius: 4px; padding: 2px 5px; margin-top: 2px; align-self: flex-start; }
+.ac-loading { padding: 12px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--m); display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ac-loading-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ac); animation: acPulse .9s ease-in-out infinite; }
+.ac-loading-dot:nth-child(2) { animation-delay: .15s; }
+.ac-loading-dot:nth-child(3) { animation-delay: .3s; }
+@keyframes acPulse { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
+.ac-empty { padding: 12px; text-align: center; font-size: 11.5px; color: var(--m); font-family: 'DM Sans', sans-serif; }
+
 .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(8px); padding: 8px 18px; background: var(--s2); border: 1px solid rgba(61,255,160,.3); border-radius: 20px; font-size: 12px; color: var(--ac); font-family: 'JetBrains Mono', monospace; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 9999; white-space: nowrap; box-shadow: 0 4px 12px var(--shadow); }
 .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.err { color: var(--red); border-color: rgba(255,77,109,.3); }
@@ -146,17 +185,25 @@ html, body {
   <div id="map"></div>
 
   <div class="top-search-area" id="topSearchArea">
-    <div class="floating-panel map-search">
-      <div class="map-search-icon" onclick="doSearch()" title="Tìm kiếm">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
+    <div class="search-wrap">
+      <div class="floating-panel map-search">
+        <input class="map-search-input" id="mapSearchInput" type="text"
+          placeholder="Tìm địa danh hoặc nhập tọa độ..."
+          autocomplete="off"
+          oninput="onSearchInput(this.value)"
+          onkeydown="onSearchKeydown(event)"
+        >
+        <div class="map-search-actions">
+          <button class="map-search-btn clear-btn" id="btnClear" onclick="clearSearch()" title="Xóa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div class="btn-sep" id="btnSep"></div>
+          <button class="map-search-btn search-btn" onclick="triggerSearch()" title="Tìm kiếm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+        </div>
       </div>
-      <input class="map-search-input" id="mapSearchInput" type="text"
-        placeholder="Nhập địa điểm hoặc tọa độ..."
-        oninput="onInputCoords(this.value)"
-        onkeydown="if(event.key==='Enter'){doSearch();}"
-      >
+      <div class="ac-dropdown" id="acDropdown"></div>
     </div>
     
     <button class="floating-panel icon-btn" id="btnPaste" onclick="doMapPaste()" title="Dán từ khay nhớ tạm">
@@ -261,7 +308,7 @@ let currentLang = 'vi';
 
 const LANG = {
   vi: {
-    placeholder: "Nhập địa điểm hoặc tọa độ...",
+    placeholder: "Tìm địa danh hoặc nhập tọa độ...",
     pasteMsg: "✓ Đã dán thành công",
     pasteTitle: "Dán từ khay nhớ tạm",
     gpsTitle: "Vị trí của tôi",
@@ -271,13 +318,10 @@ const LANG = {
     lblDataset: "Dữ liệu:",
     lblElev: "Độ cao",
     locating: "Đang định vị...",
-    searching: "Đang tìm kiếm...",
-    searchFound: "✓ Đã tìm thấy",
-    searchNotFound: "Không tìm thấy địa điểm này",
     gpsFound: "📍 Đã tìm thấy vị trí",
     gpsErr: "Không thể lấy vị trí GPS",
     noGps: "Trình duyệt không hỗ trợ GPS",
-    errApi: "Lỗi kết nối hoặc lấy dữ liệu",
+    errApi: "Lỗi lấy dữ liệu",
     unknown: "Không rõ vị trí",
     lblTerrain: "Địa hình",
     sea: "Biển",
@@ -298,7 +342,7 @@ const LANG = {
     ]
   },
   en: {
-    placeholder: "Enter place name or coords...",
+    placeholder: "Search place or enter coordinates...",
     pasteMsg: "✓ Pasted successfully",
     pasteTitle: "Paste from clipboard",
     gpsTitle: "My Location",
@@ -308,9 +352,6 @@ const LANG = {
     lblDataset: "Dataset:",
     lblElev: "Elevation",
     locating: "Locating...",
-    searching: "Searching...",
-    searchFound: "✓ Location found",
-    searchNotFound: "Could not find this place",
     gpsFound: "📍 Location found",
     gpsErr: "Could not retrieve GPS location",
     noGps: "GPS not supported on this browser",
@@ -366,66 +407,13 @@ const disableProp = (id) => {
   if(el){ L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el); }
 };
 
-// Hàm xử lý tìm kiếm (Chữ hoặc Tọa độ) khi bấm Enter hoặc click kính lúp
-async function doSearch() {
-  const raw = document.getElementById('mapSearchInput').value.trim();
-  if(!raw) return;
-
-  // 1. Kiểm tra xem có phải định dạng tọa độ không (nếu đúng thì dời map luôn)
-  if (onInputCoords(raw)) {
-    doScan();
-    return;
-  }
-
-  // 2. Nếu không phải tọa độ -> gọi API Geocoding tìm kiếm địa danh
-  const badge = document.getElementById('mapElevBadge');
-  badge.classList.add('show', 'loading');
-  document.getElementById('mapElevLoc').textContent = LANG[currentLang].searching;
-
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(raw)}&format=json&limit=1`, {
-      headers: {'User-Agent': 'ElevationScannerApp/1.0'}
-    });
-    const data = await res.json();
-
-    if (data && data.length > 0) {
-      const lat = parseFloat(data[0].lat);
-      const lon = parseFloat(data[0].lon);
-      showToast(LANG[currentLang].searchFound);
-      applyCoords(lat, lon, true, true); // Di chuyển map và kích hoạt quét độ cao
-    } else {
-      showToast(LANG[currentLang].searchNotFound, true);
-      badge.classList.remove('loading');
-      document.getElementById('mapElevLoc').textContent = LANG[currentLang].unknown;
-    }
-  } catch (e) {
-    showToast(LANG[currentLang].errApi, true);
-    badge.classList.remove('loading');
-    document.getElementById('mapElevLoc').textContent = LANG[currentLang].errApi;
-  }
-}
-
-// Lọc tọa độ tức thời nếu copy/paste đúng format số
-function onInputCoords(raw) {
-  const nums = raw.replace(/[°′″'"]/g,' ').match(/-?\d+(?:\.\d+)?/g);
-  if(!nums||nums.length<2) return false; // Không phải tọa độ -> trả về false
-  
-  let lat=parseFloat(nums[0]),lon=parseFloat(nums[1]);
-  if(/S/i.test(raw)) lat=-Math.abs(lat);
-  if(/W/i.test(raw)) lon=-Math.abs(lon);
-  if(isNaN(lat)||isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180) return false;
-  
-  _lat=lat; _lon=lon;
-  if(marker){marker.setLatLng([lat,lon]);map.panTo([lat,lon]);}
-  return true; // Đúng là tọa độ -> dời map
-}
-
 async function doMapPaste() {
   try {
     const t = await navigator.clipboard.readText();
     document.getElementById('mapSearchInput').value = t;
+    onInput(t);
     showToast(LANG[currentLang].pasteMsg);
-    doSearch(); // Thay thế doScan bằng doSearch để lỡ paste text thì nó tra cứu luôn
+    doScan();
   } catch(e) {
     document.getElementById('mapSearchInput').focus();
   }
@@ -499,7 +487,7 @@ function toggleLabels(btn) {
 }
 
 function initMap() {
-  updateLangUI(); 
+  updateLangUI(); // Init ngôn ngữ mặc định
 
   map = L.map('map',{zoomControl:false,attributionControl:false}).setView([_lat,_lon],13);
   currentLayer = LAYERS.satellite; 
@@ -526,11 +514,8 @@ function initMap() {
 
 function applyCoords(lat, lon, moveMap=true, autoScan=false) {
   _lat=lat; _lon=lon;
-  // Cập nhật tọa độ vào ô tìm kiếm nhưng không làm mất chữ nếu người dùng đang tìm text
-  // (Tính năng này được giữ nguyên để user biết được toạ độ của địa danh đó)
   const v = lat+'° N, '+lon+'° E';
   document.getElementById('mapSearchInput').value = v;
-  
   if(marker) marker.setLatLng([lat,lon]);
   if(map && moveMap) map.setView([lat,lon],map.getZoom());
   else if(map) map.panTo([lat,lon]);
@@ -558,6 +543,210 @@ function doGPS() {
     {enableHighAccuracy:true,timeout:15000}
   );
 }
+
+function onInput(raw) {
+  const nums = raw.replace(/[°′″'"]/g,' ').match(/-?\d+(?:\.\d+)?/g);
+  if(!nums||nums.length<2) return false;
+  let lat=parseFloat(nums[0]),lon=parseFloat(nums[1]);
+  if(/S/i.test(raw)) lat=-Math.abs(lat);
+  if(/W/i.test(raw)) lon=-Math.abs(lon);
+  if(isNaN(lat)||isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180) return false;
+  _lat=lat; _lon=lon;
+  if(marker){marker.setLatLng([lat,lon]);map.panTo([lat,lon]);}
+  return true;
+}
+
+// --- AUTOCOMPLETE SYSTEM ---
+let _acDebounce = null;
+let _acResults = [];
+let _acFocusIdx = -1;
+let _acOpen = false;
+let _acBlurTimer = null;
+
+const TYPE_ICON = {
+  city: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  town: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  village: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  mountain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 20 12 4 21 20 3 20"/></svg>`,
+  peak: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 20 12 4 21 20 3 20"/></svg>`,
+  water: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6 2 2 8 2 12s3 8 10 8 10-4 10-8-4-10-10-10z"/></svg>`,
+  default: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C7.03 2 3 6.03 3 11c0 5.25 7.5 11 9 11s9-5.75 9-11c0-4.97-4.03-9-9-9z"/></svg>`
+};
+
+function getTypeIcon(cls, type) {
+  const s = (cls+' '+type).toLowerCase();
+  if(s.includes('peak')||s.includes('mountain')||s.includes('núi')) return TYPE_ICON.mountain;
+  if(s.includes('water')||s.includes('lake')||s.includes('river')||s.includes('bay')) return TYPE_ICON.water;
+  if(s.includes('city')) return TYPE_ICON.city;
+  if(s.includes('town')) return TYPE_ICON.town;
+  if(s.includes('village')) return TYPE_ICON.village;
+  return TYPE_ICON.default;
+}
+
+function getTypeLabel(cls, type) {
+  const s = (cls+' '+type).toLowerCase();
+  if(s.includes('city')) return 'Thành phố';
+  if(s.includes('town')) return 'Thị trấn';
+  if(s.includes('village')) return 'Làng/Xã';
+  if(s.includes('peak')||s.includes('mountain')) return 'Núi/Đỉnh';
+  if(s.includes('lake')) return 'Hồ';
+  if(s.includes('river')) return 'Sông';
+  if(s.includes('bay')||s.includes('sea')) return 'Vịnh/Biển';
+  if(s.includes('administrative')) return 'Khu vực';
+  if(s.includes('natural')) return 'Thiên nhiên';
+  if(s.includes('tourism')) return 'Du lịch';
+  if(s.includes('historic')) return 'Di tích';
+  if(s.includes('amenity')) return 'Địa điểm';
+  return cls || type || '';
+}
+
+function buildSubtitle(item) {
+  const a = item.address || {};
+  const parts = [];
+  const city = a.city || a.town || a.county || a.state_district;
+  const state = a.state || a.province;
+  const country = a.country;
+  if(city && city !== item.name) parts.push(city);
+  if(state && state !== city && state !== item.name) parts.push(state);
+  if(country) parts.push(country);
+  return parts.join(', ') || item.display_name || '';
+}
+
+function acShowLoading() {
+  const dd = document.getElementById('acDropdown');
+  dd.innerHTML = `<div class="ac-loading"><div class="ac-loading-dot"></div><div class="ac-loading-dot"></div><div class="ac-loading-dot"></div></div>`;
+  dd.classList.add('open');
+  _acOpen = true;
+}
+
+function acShowEmpty(msg) {
+  const dd = document.getElementById('acDropdown');
+  dd.innerHTML = `<div class="ac-empty">${msg}</div>`;
+  dd.classList.add('open');
+  _acOpen = true;
+}
+
+function acClose() {
+  const dd = document.getElementById('acDropdown');
+  dd.classList.remove('open');
+  _acOpen = false;
+  _acFocusIdx = -1;
+}
+
+function acRender(results) {
+  _acResults = results;
+  _acFocusIdx = -1;
+  const dd = document.getElementById('acDropdown');
+  if(!results.length) { acShowEmpty(currentLang==='vi'?'Không tìm thấy địa danh':'No places found'); return; }
+  dd.innerHTML = results.map((r,i) => {
+    const icon = getTypeIcon(r.class||'', r.type||'');
+    const typeLabel = getTypeLabel(r.class||'', r.type||'');
+    const name = r.name || r.display_name.split(',')[0];
+    const sub = buildSubtitle(r);
+    return `<div class="ac-item" data-idx="${i}" onmousedown="acSelect(${i})">
+      <div class="ac-icon">${icon}</div>
+      <div class="ac-text">
+        <div class="ac-name">${escHtml(name)}</div>
+        ${sub ? `<div class="ac-sub">${escHtml(sub)}</div>` : ''}
+      </div>
+      ${typeLabel ? `<div class="ac-type">${escHtml(typeLabel)}</div>` : ''}
+    </div>`;
+  }).join('');
+  dd.classList.add('open');
+  _acOpen = true;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function acSelect(idx) {
+  const r = _acResults[idx];
+  if(!r) return;
+  const lat = parseFloat(r.lat), lon = parseFloat(r.lon);
+  const name = r.name || r.display_name.split(',')[0];
+  document.getElementById('mapSearchInput').value = name;
+  acClose();
+  applyCoords(lat, lon, true, true);
+  if(r.boundingbox) {
+    try {
+      const bb = r.boundingbox;
+      map.fitBounds([[+bb[0],+bb[2]],[+bb[1],+bb[3]]], {maxZoom:15});
+    } catch(e) { map.setView([lat,lon], 14); }
+  } else {
+    map.setView([lat,lon], 14);
+  }
+}
+
+function acMoveFocus(dir) {
+  const items = document.querySelectorAll('#acDropdown .ac-item');
+  if(!items.length) return;
+  items.forEach(el => el.classList.remove('focused'));
+  _acFocusIdx = Math.max(0, Math.min(items.length-1, _acFocusIdx + dir));
+  items[_acFocusIdx].classList.add('focused');
+  items[_acFocusIdx].scrollIntoView({block:'nearest'});
+}
+
+async function acSearch(q) {
+  try {
+    const lang = currentLang === 'vi' ? 'vi' : 'en';
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=6&accept-language=${lang}`;
+    const r = await fetch(url, {headers:{'User-Agent':'ElevationScannerApp/1.0'}, signal: AbortSignal.timeout(6000)});
+    if(!r.ok) throw new Error('fetch fail');
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+function clearSearch() {
+  const inp = document.getElementById('mapSearchInput');
+  inp.value = '';
+  inp.focus();
+  acClose();
+}
+
+function triggerSearch() {
+  const val = document.getElementById('mapSearchInput').value.trim();
+  if(!val) return;
+  acClose();
+  doScan();
+}
+
+function onSearchInput(val) {
+  clearTimeout(_acDebounce);
+  // Try coordinate parse first
+  const isCoord = onInput(val);
+  if(isCoord) { acClose(); return; }
+  
+  const q = val.trim();
+  if(q.length < 2) { acClose(); return; }
+  
+  acShowLoading();
+  _acDebounce = setTimeout(async () => {
+    const results = await acSearch(q);
+    if(results === null) { acShowEmpty(currentLang==='vi'?'Lỗi kết nối':'Connection error'); return; }
+    acRender(results);
+  }, 320);
+}
+
+function onSearchKeydown(e) {
+  if(e.key === 'Escape') { acClose(); return; }
+  if(_acOpen) {
+    if(e.key === 'ArrowDown') { e.preventDefault(); acMoveFocus(1); return; }
+    if(e.key === 'ArrowUp')   { e.preventDefault(); acMoveFocus(-1); return; }
+    if(e.key === 'Enter') {
+      if(_acFocusIdx >= 0) { e.preventDefault(); acSelect(_acFocusIdx); return; }
+      acClose();
+    }
+  }
+  if(e.key === 'Enter') doScan();
+}
+
+// Close dropdown when clicking elsewhere
+document.addEventListener('click', e => {
+  if(!e.target.closest('#acDropdown') && !e.target.closest('#mapSearchInput')) {
+    acClose();
+  }
+});
 
 function setCoords(lat,lon){ applyCoords(lat,lon,true,true); }
 
