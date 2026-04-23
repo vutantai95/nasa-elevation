@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Elevation · NASA SRTM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
@@ -142,11 +142,11 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .loc-spin{width:9px;height:9px;border:1.5px solid var(--m2);border-top-color:var(--m);border-radius:50%;animation:spin .7s linear infinite}
 .loc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--txt);margin-bottom:18px;line-height:1.3}
 .elev-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--m);margin-bottom:10px}
-.elev-display{display:flex;align-items:baseline;justify-content:center;gap:4px;line-height:1}
-.elev-num{font-family:'Syne',sans-serif;font-size:96px;font-weight:800;color:var(--ac);line-height:.92;letter-spacing:-4px;text-shadow:0 0 60px rgba(61,255,160,.25),0 0 120px rgba(61,255,160,.1);animation:pop .5s cubic-bezier(.34,1.56,.64,1);display:inline-block}
-@keyframes pop{from{opacity:0;transform:scale(.75) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.elev-unit{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;color:var(--m);margin-left:2px;margin-bottom:6px}
-.elev-sub{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--m);margin-top:12px;letter-spacing:.3px}
+.elev-display{display:flex;align-items:flex-end;justify-content:center;gap:0;line-height:1}
+.elev-num{font-family:'Bebas Neue',sans-serif;font-size:120px;font-weight:400;color:var(--ac);line-height:1;letter-spacing:2px;text-shadow:0 0 60px rgba(61,255,160,.3),0 0 120px rgba(61,255,160,.12);animation:pop .5s cubic-bezier(.34,1.56,.64,1);display:inline-block}
+@keyframes pop{from{opacity:0;transform:scale(.75) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.elev-unit{font-family:'Bebas Neue',sans-serif;font-size:42px;font-weight:400;color:var(--m);margin-left:4px;margin-bottom:10px;letter-spacing:1px}
+.elev-sub{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--m);margin-top:14px;letter-spacing:.3px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--bd)}
 .stat{padding:14px;border-right:1px solid var(--bd);text-align:center}
 .stat:last-child{border-right:none}
@@ -173,7 +173,8 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
   .stats{grid-template-columns:repeat(2,1fr)}
   .stat:nth-child(2){border-right:none}
   .stat:nth-child(3){border-top:1px solid var(--bd)}
-  .elev-num{font-size:72px;letter-spacing:-3px}
+  .elev-num{font-size:88px;letter-spacing:1px}
+  .elev-unit{font-size:32px}
   .hdr-chip{display:none}
   .gps-btn span{display:none}
   .selectors-row{flex-direction:column}
@@ -393,9 +394,9 @@ const LAYERS = {
   )
 };
 
-// Esri hybrid reference overlay — dùng World_Reference_Overlay (mới hơn, có tiếng Việt tốt hơn)
+// Esri hybrid label overlay — World_Boundaries_and_Places_Dark (đẹp trên satellite)
 const LABEL_OVERLAY = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places_Alt/MapServer/tile/{z}/{y}/{x}',
   { maxZoom: 19, attribution: 'Esri', opacity: 1, zIndex: 10 }
 );
 
@@ -569,11 +570,15 @@ function terrain(e) {
 // preference signal. Open-Elevation supports the 'dataset' param for
 // srtm30 / srtm90 / aster via its dataset query option.
 async function fetchFromOpenElevation(lat, lon) {
-  // Open-Elevation accepts a 'dataset' parameter
   const dsMap = { srtm30: 'srtm30', srtm90: 'srtm90', aster: 'aster30m', mapzen: 'srtm30' };
   const dsParam = dsMap[_ds] || 'srtm30';
-  const url = `https://api.open-elevation.com/api/v1/lookup?locations=${lat},${lon}&dataset=${dsParam}`;
-  const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
+  // Dùng POST — ổn định hơn GET, tránh bị rate-limit
+  const r = await fetch(`https://api.open-elevation.com/api/v1/lookup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ locations: [{ latitude: lat, longitude: lon }] }),
+    signal: AbortSignal.timeout(10000)
+  });
   if (!r.ok) throw new Error('open-elevation HTTP ' + r.status);
   const d = await r.json();
   if (d.results?.[0] == null) throw new Error('no result');
