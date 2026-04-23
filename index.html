@@ -142,11 +142,11 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .loc-spin{width:9px;height:9px;border:1.5px solid var(--m2);border-top-color:var(--m);border-radius:50%;animation:spin .7s linear infinite}
 .loc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--txt);margin-bottom:18px;line-height:1.3}
 .elev-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--m);margin-bottom:10px}
-.elev-display{display:flex;align-items:flex-end;justify-content:center;gap:0;line-height:1}
-.elev-num{font-family:'Bebas Neue',sans-serif;font-size:120px;font-weight:400;color:var(--ac);line-height:1;letter-spacing:2px;text-shadow:0 0 60px rgba(61,255,160,.3),0 0 120px rgba(61,255,160,.12);animation:pop .5s cubic-bezier(.34,1.56,.64,1);display:inline-block}
-@keyframes pop{from{opacity:0;transform:scale(.75) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.elev-unit{font-family:'Bebas Neue',sans-serif;font-size:42px;font-weight:400;color:var(--m);margin-left:4px;margin-bottom:10px;letter-spacing:1px}
-.elev-sub{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--m);margin-top:14px;letter-spacing:.3px}
+.elev-display{display:flex;align-items:baseline;justify-content:center;gap:6px;line-height:1}
+.elev-num{font-family:'DM Sans',sans-serif;font-size:88px;font-weight:600;color:var(--ac);line-height:1;letter-spacing:-3px;text-shadow:0 0 48px rgba(61,255,160,.25);animation:pop .45s cubic-bezier(.34,1.56,.64,1);display:inline-block}
+@keyframes pop{from{opacity:0;transform:scale(.88) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.elev-unit{font-family:'DM Sans',sans-serif;font-size:26px;font-weight:400;color:var(--m);letter-spacing:0}
+.elev-sub{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--m);margin-top:12px;letter-spacing:.3px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--bd)}
 .stat{padding:14px;border-right:1px solid var(--bd);text-align:center}
 .stat:last-child{border-right:none}
@@ -173,8 +173,8 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
   .stats{grid-template-columns:repeat(2,1fr)}
   .stat:nth-child(2){border-right:none}
   .stat:nth-child(3){border-top:1px solid var(--bd)}
-  .elev-num{font-size:88px;letter-spacing:1px}
-  .elev-unit{font-size:32px}
+  .elev-num{font-size:68px;letter-spacing:-2px}
+  .elev-unit{font-size:22px}
   .hdr-chip{display:none}
   .gps-btn span{display:none}
   .selectors-row{flex-direction:column}
@@ -394,10 +394,10 @@ const LAYERS = {
   )
 };
 
-// Esri hybrid label overlay — World_Boundaries_and_Places_Dark (đẹp trên satellite)
+// CartoDB label-only overlay — không cần key, hoạt động tốt trên satellite
 const LABEL_OVERLAY = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places_Alt/MapServer/tile/{z}/{y}/{x}',
-  { maxZoom: 19, attribution: 'Esri', opacity: 1, zIndex: 10 }
+  'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
+  { maxZoom: 19, attribution: 'CartoDB', subdomains: 'abcd', opacity: 1, zIndex: 10 }
 );
 
 let _labelsOn = false;
