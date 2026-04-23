@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NASA Elevation — Độ cao mực nước biển</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --nasa-blue: #0b3d91;
+    --nasa-red: #fc3d21;
+    --space-black: #060a10;
+    --panel: #0d1520;
+    --panel-border: #1a3050;
+    --cyan: #00d4ff;
+    --green: #00ff88;
+    --text: #c8dff5;
+    --dim: #4a6a8a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--space-black);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Star background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(2px 2px at 20% 90%, rgba(0,212,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 45%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 55%, rgba(255,255,255,0.4) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .nasa-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .nasa-badge {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--nasa-blue);
+    border: 3px solid var(--nasa-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 11px;
+    color: white;
+    letter-spacing: 1px;
+    box-shadow: 0 0 20px rgba(252,61,33,0.4);
+    animation: pulse-badge 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-badge {
+    0%,100% { box-shadow: 0 0 20px rgba(252,61,33,0.4); }
+    50% { box-shadow: 0 0 35px rgba(252,61,33,0.7), 0 0 60px rgba(252,61,33,0.2); }
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(18px, 4vw, 28px);
+    font-weight: 700;
+    color: white;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  .data-source-tag {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 4px 12px;
+    border: 1px solid var(--nasa-blue);
+    border-radius: 2px;
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    background: rgba(11,61,145,0.2);
+  }
+
+  /* Panel */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  /* Single paste input */
+  .paste-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .paste-group label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .paste-group input {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--panel-border);
+    border-radius: 3px;
+    padding: 14px 48px 14px 16px;
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .paste-group input:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 12px rgba(0,212,255,0.2);
+  }
+  .paste-icon-btn {
+    position: absolute;
+    right: 0;
+    top: 0; bottom: 0;
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--panel-border);
+    cursor: pointer;
+    color: var(--dim);
+    transition: color 0.2s, background 0.2s;
+    border-radius: 0 3px 3px 0;
+  }
+  .paste-icon-btn:hover {
+    color: var(--cyan);
+    background: rgba(0,212,255,0.07);
+  }
+  .paste-icon-btn:active {
+    background: rgba(0,212,255,0.15);
+  }
+  .paste-icon-btn svg {
+    width: 17px; height: 17px;
+    pointer-events: none;
+  }
+  .paste-toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green);
+    color: #000;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    padding: 8px 20px;
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .paste-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .parsed-preview {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    min-height: 18px;
+  }
+  .parsed-preview span { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <div class="nasa-logo">
+      <div class="nasa-badge">NASA</div>
+      <h1>Elevation<br>Scanner</h1>
+    </div>
+    <p class="subtitle">Đo độ cao so với mực nước biển</p>
+    <span class="data-source-tag">DATA: SRTM · NASA EARTHDATA · OPEN-ELEVATION</span>
+  </header>
+
+  <div class="panel">
+    <div class="panel-title">◈ Nhập tọa độ GPS</div>
+
+    <div class="paste-group">
+      <label>Dán tọa độ vào đây — mọi định dạng đều được</label>
+      <div class="input-wrap">
+        <input type="text" id="coordInput"
+          value="19.12454° N, 105.67458° E"
+          placeholder="VD: 19.12454° N, 105.67458° E  hoặc  19.12454, 105.67458"
+          oninput="parseCoords(this.value)">
+        <button class="paste-icon-btn" onclick="doPaste()" title="Dán từ clipboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2" width="6" height="4" rx="1"/>
+            <path d="M16 4h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1"/>
+            <path d="M9 12h6M9 16h4"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="parsed-preview" id="parsedPreview">
+      Lat: <span id="previewLat">19.12454</span> &nbsp;|&nbsp; Lon: <span id="previewLon">105.67458</span>
+    </div>
+
+    <div class="presets">
+      <button class="preset-btn" onclick="setCoords(19.12454, 105.67458)">📍 Vị trí của bạn</button>
+      <button class="preset-btn" onclick="setCoords(21.0285, 105.8542)">🏙 Hà Nội</button>
+      <button class="preset-btn" onclick="setCoords(10.7769, 106.7009)">🏙 TP.HCM</button>
+      <button class="preset-btn" onclick="setCoords(16.0544, 108.2022)">🏙 Đà Nẵng</button>
+      <button class="preset-btn" onclick="setCoords(22.3264, 103.8484)">⛰ Fansipan</button>
+      <button class="preset-btn" onclick="setCoords(8.5574, 106.9684)">🌊 Cà Mau</button>
+    </div>
+
+    <button class="launch-btn" id="scanBtn" onclick="scanElevation()">
+      ▶ QUÉT ĐỘ CAO
+    </button>
+
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="radar"></div>
+    <div class="loading-text">ĐANG KẾT NỐI NASA SRTM DATABASE...</div>
+  </div>
+
+  <div class="result-panel panel" id="resultPanel">
+    <div class="panel-title">◈ Kết quả phân tích địa hình</div>
+
+    <div class="elevation-display">
+      <div class="elevation-label">ĐỘ CAO SO VỚI MỰC NƯỚC BIỂN</div>
+      <div>
+        <span class="elevation-value" id="elevValue">—</span>
+        <span class="elevation-unit">m</span>
+      </div>
+      <div class="elevation-sub" id="elevFt">—</div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="stat-label">Vĩ độ</div>
+        <div class="stat-value" id="resLat">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Kinh độ</div>
+        <div class="stat-value" id="resLon">—</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-label">Nguồn dữ liệu</div>
+        <div class="stat-value" id="resSource">SRTM</div>
+      </div>
+    </div>
+
+    <div class="terrain-bar">
+      <div class="terrain-label">◈ Phân loại địa hình</div>
+      <div class="terrain-scale">
+        <div class="terrain-marker" id="terrainMarker" style="left: 0%"></div>
+      </div>
+      <div class="terrain-labels">
+        <span>Biển (0m)</span>
+        <span>Đồng bằng</span>
+        <span>Cao nguyên</span>
+        <span>Núi cao</span>
+        <span>3000m+</span>
+      </div>
+      <div class="terrain-desc" id="terrainDesc">—</div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div>DỮ LIỆU: NASA SHUTTLE RADAR TOPOGRAPHY MISSION (SRTM) · ĐỘ PHÂN GIẢI 30m</div>
+    <div class="api-info">
+      <span class="api-tag"><span class="dot"></span> OPEN-ELEVATION.COM API</span>
+      <span class="api-tag"><span class="dot" style="background:var(--cyan)"></span> BACKUP: OPEN-METEO ELEVATION API</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+let _lat = 19.12454, _lon = 105.67458;
+
+function parseCoords(raw) {
+  const nums = raw.replace(/[°′″'"]/g,' ').match(/-?\d+(?:\.\d+)?/g);
+  if (!nums || nums.length < 2) {
+    document.getElementById('parsedPreview').innerHTML = '<span style="color:var(--nasa-red)">⚠ Không nhận dạng được toạ độ</span>';
+    return false;
+  }
+  let lat = parseFloat(nums[0]), lon = parseFloat(nums[1]);
+  if (/S/i.test(raw)) lat = -Math.abs(lat);
+  if (/W/i.test(raw)) lon = -Math.abs(lon);
+  if (isNaN(lat)||isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180) {
+    document.getElementById('parsedPreview').innerHTML = '<span style="color:var(--nasa-red)">⚠ Giá trị ngoài phạm vi hợp lệ</span>';
+    return false;
+  }
+  _lat = lat; _lon = lon;
+  document.getElementById('parsedPreview').innerHTML = 'Lat: <span>' + lat.toFixed(5) + '</span> &nbsp;|  Lon: <span>' + lon.toFixed(5) + '</span>';
+  return true;
+}
+
+function setCoords(lat, lon) {
+  _lat = lat; _lon = lon;
+  document.getElementById('coordInput').value = lat + '° N, ' + lon + '° E';
+  document.getElementById('parsedPreview').innerHTML = 'Lat: <span>' + lat.toFixed(5) + '</span> &nbsp;|  Lon: <span>' + lon.toFixed(5) + '</span>';
+}
+
+function getTerrainInfo(elev) {
+  if (elev < 0) return { desc: '🌊 Dưới mực nước biển', pct: 0, color: '#001aff' };
+  if (elev < 10) return { desc: '🏖 Vùng ven biển / đồng bằng thấp', pct: 2, color: '#00aaff' };
+  if (elev < 50) return { desc: '🌾 Đồng bằng', pct: 8, color: '#00cc88' };
+  if (elev < 200) return { desc: '🌿 Vùng trung du', pct: 18, color: '#00ff88' };
+  if (elev < 500) return { desc: '⛰ Vùng đồi núi thấp', pct: 35, color: '#aaff00' };
+  if (elev < 1000) return { desc: '🏔 Núi trung bình', pct: 50, color: '#ffcc00' };
+  if (elev < 2000) return { desc: '🏔 Núi cao', pct: 68, color: '#ff8800' };
+  if (elev < 3000) return { desc: '🏔 Núi rất cao', pct: 83, color: '#ff4400' };
+  return { desc: '🗻 Đỉnh núi / Cao nguyên lớn', pct: 96, color: '#ffffff' };
+}
+
+async function fetchWithFallback(lat, lon) {
+  // Primary: open-elevation.com (NASA SRTM data)
+  try {
+    const r = await fetch(`https://api.open-elevation.com/api/v1/lookup?locations=${lat},${lon}`, {
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!r.ok) throw new Error('open-elevation failed');
+    const d = await r.json();
+    if (d.results && d.results[0] !== undefined) {
+      return { elevation: d.results[0].elevation, source: 'NASA SRTM' };
+    }
+  } catch(e) {}
+
+  // Fallback: open-meteo elevation
+  try {
+    const r2 = await fetch(
+      `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!r2.ok) throw new Error('open-meteo failed');
+    const d2 = await r2.json();
+    if (d2.elevation !== undefined) {
+      return { elevation: d2.elevation[0] ?? d2.elevation, source: 'SRTM (Open-Meteo)' };
+    }
+  } catch(e) {}
+
+  throw new Error('Không thể kết nối đến cả hai API. Vui lòng thử lại sau.');
+}
+
+async function scanElevation() {
+  if (!parseCoords(document.getElementById('coordInput').value)) {
+    const err2 = document.getElementById('errorMsg');
+    err2.textContent = '⚠ Tọa độ không hợp lệ. VD: 19.12454° N, 105.67458° E';
+    err2.classList.add('active');
+    return;
+  }
+  const lat = _lat, lon = _lon;
+
+  const err = document.getElementById('errorMsg');
+  err.classList.remove('active');
+
+
+
+  const btn = document.getElementById('scanBtn');
+  const loading = document.getElementById('loading');
+  const result = document.getElementById('resultPanel');
+
+  btn.disabled = true;
+  loading.classList.add('active');
+  result.classList.remove('active');
+
+  try {
+    const data = await fetchWithFallback(lat, lon);
+    const elev = Math.round(data.elevation * 10) / 10;
+    const ft = Math.round(elev * 3.28084);
+    const terrain = getTerrainInfo(elev);
+
+    document.getElementById('elevValue').textContent = elev.toLocaleString('vi-VN');
+    document.getElementById('elevFt').textContent = `≈ ${ft.toLocaleString('vi-VN')} feet · ${(elev/1000).toFixed(3)} km`;
+    document.getElementById('resLat').textContent = lat.toFixed(5) + '°N';
+    document.getElementById('resLon').textContent = lon.toFixed(5) + '°E';
+    document.getElementById('resSource').textContent = data.source;
+    document.getElementById('terrainDesc').textContent = terrain.desc;
+
+    setTimeout(() => {
+      document.getElementById('terrainMarker').style.left = terrain.pct + '%';
+    }, 300);
+
+    result.classList.add('active');
+  } catch(e) {
+    err.textContent = '⚠ ' + e.message;
+    err.classList.add('active');
+  } finally {
+    loading.classList.remove('active');
+    btn.disabled = false;
+  }
+}
+
+// Auto-scan on load
+window.addEventListener('load', () => setTimeout(scanElevation, 600));
+</script>
+<div class="paste-toast" id="pasteToast">✓ ĐÃ DÁN</div>
+<script>
+async function doPaste() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const input = document.getElementById('coordInput');
+    input.value = text;
+    parseCoords(text);
+    // Toast
+    const toast = document.getElementById('pasteToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1500);
+  } catch(e) {
+    // Fallback: focus input so user can paste manually
+    document.getElementById('coordInput').focus();
+    document.execCommand && document.execCommand('paste');
+  }
+}
+</script>
+</body>
+</html>
