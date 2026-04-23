@@ -117,6 +117,31 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .map-tip{display:none}
 
 .map-layer-btns{position:absolute;top:10px;right:10px;z-index:1000;display:flex;gap:4px;pointer-events:all}
+
+/* Map search bar */
+.map-search{position:absolute;top:10px;left:10px;z-index:1000;display:flex;align-items:center;gap:0;pointer-events:all;transition:all .25s cubic-bezier(.4,0,.2,1)}
+.map-search-icon{width:32px;height:32px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);transition:all .18s;flex-shrink:0}
+.map-search-icon:hover{color:#fff;border-color:rgba(61,255,160,.5);background:rgba(61,255,160,.12)}
+.map-search-icon svg{width:14px;height:14px;pointer-events:none}
+.map-search-expanded{display:flex;align-items:center;gap:0;overflow:hidden;width:0;opacity:0;transition:width .28s cubic-bezier(.4,0,.2,1),opacity .2s;pointer-events:none}
+.map-search.open .map-search-expanded{width:220px;opacity:1;pointer-events:all}
+.map-search.open .map-search-icon{border-radius:7px 0 0 7px;border-right:none;border-color:rgba(61,255,160,.4);background:rgba(10,12,18,.92);color:var(--ac)}
+.map-search-input{flex:1;height:32px;background:rgba(10,12,18,.92);border:1px solid rgba(61,255,160,.4);border-left:none;border-right:none;padding:0 8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#fff;outline:none;min-width:0}
+.map-search-input::placeholder{color:rgba(255,255,255,.3)}
+.map-search-paste{width:32px;height:32px;border-radius:0 7px 7px 0;border:1px solid rgba(61,255,160,.4);border-left:none;background:rgba(10,12,18,.92);backdrop-filter:blur(6px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);transition:all .15s;flex-shrink:0}
+.map-search-paste:hover{color:var(--ac);background:rgba(61,255,160,.1)}
+.map-search-paste:active{transform:scale(.9)}
+.map-search-paste svg{width:13px;height:13px;pointer-events:none}
+.map-elev-badge{position:absolute;bottom:10px;left:10px;z-index:1000;pointer-events:none;background:rgba(8,9,12,.58);backdrop-filter:blur(12px);border:1px solid rgba(61,255,160,.25);border-radius:10px;padding:9px 15px 9px 13px;display:flex;align-items:center;gap:13px;opacity:0;transform:translateY(5px);transition:opacity .35s,transform .35s;max-width:300px}
+.map-elev-badge.show{opacity:1;transform:translateY(0)}
+.meb-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;border-right:1px solid rgba(255,255,255,.1);padding-right:13px;gap:0px}
+.meb-num{font-family:'DM Sans',sans-serif;font-size:36px;font-weight:700;color:#3dffa0;letter-spacing:-1.5px;line-height:1}
+.meb-unit{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(61,255,160,.55);font-weight:500;letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+.meb-right{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0}
+.meb-label{font-family:'Syne',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.meb-loc{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:rgba(255,255,255,.85);line-height:1.35;word-break:break-word}
+.meb-spin{width:12px;height:12px;border:2px solid rgba(61,255,160,.2);border-top-color:#3dffa0;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;position:absolute;top:8px;right:9px;opacity:0;transition:opacity .2s}
+.map-elev-badge.loading .meb-spin{opacity:1}
 .map-gps-btn{position:absolute;bottom:10px;right:10px;z-index:1000;pointer-events:all;width:32px;height:32px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);transition:all .15s}
 .map-gps-btn:hover{color:#fff;border-color:var(--ac2);background:rgba(56,182,255,.15)}
 .map-gps-btn svg{width:14px;height:14px;pointer-events:none}
@@ -126,8 +151,15 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .layer-btn.active{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
 .layer-btn.label-btn{margin-left:6px;border-color:rgba(255,255,255,.1)}
 .layer-btn.label-btn.on{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
-/* Invert label tiles: chữ tối → trắng, nền trắng → trong suốt */
-.label-tile-invert { filter: invert(1) brightness(4) contrast(1.2); }
+/* Invert label tiles: chữ tối → trắng, + drop-shadow để nổi bật trên mọi nền */
+.label-tile-invert {
+  filter:
+    invert(1)
+    brightness(3.8)
+    contrast(1.2)
+    drop-shadow(0px 0px 2px rgba(0,0,0,0.85))
+    drop-shadow(0px 0px 2px rgba(0,0,0,0.5));
+}
 
 
 
@@ -236,11 +268,44 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
     <div class="card-hd"><div class="dot b"></div><span>Bản đồ · Click hoặc kéo ghim để chọn vị trí</span></div>
     <div class="map-wrap">
       <div id="map"></div>
+      <!-- Map search bar -->
+      <div class="map-search" id="mapSearch">
+        <button class="map-search-icon" onclick="toggleMapSearch()" title="Tìm kiếm tọa độ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </button>
+        <div class="map-search-expanded">
+          <input class="map-search-input" id="mapSearchInput" type="text"
+            placeholder="20.8449, 106.6881"
+            oninput="onInput(this.value)"
+            onkeydown="if(event.key==='Enter'){doScan();toggleMapSearch()}"
+          >
+          <button class="map-search-paste" onclick="doMapPaste()" title="Dán từ clipboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="2" width="6" height="4" rx="1.5"/>
+              <path d="M16 4h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1"/>
+              <path d="M9 12h6M9 16h4"/>
+            </svg>
+          </button>
+        </div>
+      </div>
       <div class="map-layer-btns">
         <button class="layer-btn" onclick="switchLayer('street',this)">Đường</button>
         <button class="layer-btn active" id="btnSatellite" onclick="switchLayer('satellite',this)">Vệ tinh</button>
         <button class="layer-btn" onclick="switchLayer('topo',this)">Địa hình</button>
         <button class="layer-btn label-btn" id="btnLabels" onclick="toggleLabels(this)" title="Bật/tắt địa danh">🏷 Nhãn</button>
+      </div>
+      <div class="map-elev-badge" id="mapElevBadge">
+        <div class="meb-spin"></div>
+        <div class="meb-left">
+          <span class="meb-num" id="mapElevNum">—</span>
+          <span class="meb-unit">mét</span>
+        </div>
+        <div class="meb-right">
+          <span class="meb-label">Độ cao · SRTM</span>
+          <span class="meb-loc" id="mapElevLoc">Đang xác định vị trí...</span>
+        </div>
       </div>
       <button class="map-gps-btn" id="mapGpsBtn" onclick="doGPS()" title="Vị trí của tôi">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -280,21 +345,8 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
       </div>
     </div>
     <div class="inp-wrap">
-      <div class="inp-row">
-        <div class="inp-field-wrap">
-          <input class="inp-field" id="coordInput" type="text"
-            value="20.8449° N, 106.6881° E"
-            placeholder="20.8449° N, 106.6881° E — dán bất kỳ định dạng nào"
-            oninput="onInput(this.value)">
-          <button class="paste-btn" onclick="doPaste()" title="Dán từ clipboard">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="2" width="6" height="4" rx="1.5"/>
-              <path d="M16 4h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1"/>
-              <path d="M9 12h6M9 16h4"/>
-            </svg>
-          </button>
-        </div>
-      </div>
+      <!-- coordInput hidden, synced from map search bar -->
+      <input type="hidden" id="coordInput" value="20.8449° N, 106.6881° E">
       <div class="action-row">
         <button class="scan-btn" id="scanBtn" onclick="doScan()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -363,6 +415,33 @@ let _lat = 20.8449, _lon = 106.6881;
 let map, marker, currentLayer;
 let _src = 'open-meteo'; // 'open-meteo' | 'open-elevation'
 let _ds = 'srtm30'; // 'srtm30' | 'srtm90' | 'aster' | 'mapzen'
+
+// ── Map search bar ──
+function toggleMapSearch() {
+  const ms = document.getElementById('mapSearch');
+  const inp = document.getElementById('mapSearchInput');
+  const isOpen = ms.classList.toggle('open');
+  if (isOpen) {
+    setTimeout(() => inp.focus(), 280);
+    // Disable map click/drag propagation when open
+    L.DomEvent.disableClickPropagation(ms);
+    L.DomEvent.disableScrollPropagation(ms);
+  }
+}
+
+async function doMapPaste() {
+  try {
+    const t = await navigator.clipboard.readText();
+    const inp = document.getElementById('mapSearchInput');
+    inp.value = t;
+    document.getElementById('coordInput').value = t;
+    onInput(t);
+    showToast('✓ Đã dán');
+    doScan();
+  } catch(e) {
+    document.getElementById('mapSearchInput').focus();
+  }
+}
 
 // ── Theme toggle ──
 function toggleTheme() {
@@ -456,7 +535,7 @@ function initMap() {
   marker = L.marker([_lat, _lon], { icon: mkIcon(), draggable: true }).addTo(map);
 
   // Ngăn click trên buttons lan xuống map
-  document.querySelectorAll('.map-layer-btns, .map-gps-btn').forEach(el => {
+  document.querySelectorAll('.map-layer-btns, .map-gps-btn, .map-search').forEach(el => {
     L.DomEvent.disableClickPropagation(el);
     L.DomEvent.disableScrollPropagation(el);
   });
@@ -473,7 +552,9 @@ function initMap() {
 
 function applyCoords(lat, lon, moveMap = true, autoScan = false) {
   _lat = lat; _lon = lon;
-  document.getElementById('coordInput').value = lat + '° N, ' + lon + '° E';
+  const coordVal = lat + '° N, ' + lon + '° E';
+  document.getElementById('coordInput').value = coordVal;
+  document.getElementById('mapSearchInput').value = coordVal;
   document.getElementById('hint').innerHTML = '<span class="ok">✓</span> Lat: ' + lat + ' · Lon: ' + lon;
   if (marker) marker.setLatLng([lat, lon]);
   if (map && moveMap) map.setView([lat, lon], map.getZoom());
@@ -525,6 +606,8 @@ function setSrc(src, btn) {
 
 // ── Input parsing ──
 function onInput(raw) {
+  // Keep hidden coordInput in sync
+  document.getElementById('coordInput').value = raw;
   const nums = raw.replace(/[°′″'"]/g, ' ').match(/-?\d+(?:\.\d+)?/g);
   if (!nums || nums.length < 2) {
     document.getElementById('hint').innerHTML = '<span class="er">⚠ Không nhận dạng được tọa độ</span>';
@@ -656,6 +739,7 @@ async function doScan() {
   btn.disabled = true;
   ld.classList.add('on');
   res.classList.remove('on');
+  document.getElementById('mapElevBadge').classList.add('show','loading');
   document.getElementById('locRow').innerHTML = '<span class="loc-spin"></span> Đang tìm tên khu vực...';
   document.getElementById('locName').textContent = '';
 
@@ -669,6 +753,10 @@ async function doScan() {
     const t = terrain(elev);
 
     document.getElementById('elevNum').textContent = elev.toLocaleString('vi-VN');
+    const _badge = document.getElementById('mapElevBadge');
+    document.getElementById('mapElevNum').textContent = elev.toLocaleString('vi-VN');
+    _badge.classList.remove('loading');
+    _badge.classList.add('show');
     document.getElementById('elevSub').textContent = '≈ ' + ft.toLocaleString('vi-VN') + ' ft · ' + (elev / 1000).toFixed(3) + ' km';
     document.getElementById('sLat').textContent = lat.toFixed(5) + '°';
     document.getElementById('sLon').textContent = lon.toFixed(5) + '°';
@@ -682,6 +770,7 @@ async function doScan() {
     fetchLoc(lat, lon).then(name => {
       document.getElementById('locRow').innerHTML = '📍 Khu vực';
       document.getElementById('locName').textContent = name || 'Không xác định được';
+      document.getElementById('mapElevLoc').textContent = name || 'Không xác định được';
     });
 
   } catch(e) {
