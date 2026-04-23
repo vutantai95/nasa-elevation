@@ -120,6 +120,10 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .layer-btn{padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,.6);transition:all .15s}
 .layer-btn:hover{color:#fff;border-color:rgba(255,255,255,.35)}
 .layer-btn.active{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
+.layer-btn.label-btn{margin-left:6px;border-color:rgba(255,255,255,.1)}
+.layer-btn.label-btn.on{background:rgba(255,179,71,.15);border-color:rgba(255,179,71,.55);color:var(--warn)}
+.layer-btn.label-btn:not(.on){opacity:.55}
+.layer-btn.label-btn:not(.on):hover{opacity:1}
 
 /* error */
 .err-bar{display:none;padding:11px 16px;background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.22);border-radius:var(--rs);font-size:13px;color:var(--red)}
@@ -224,8 +228,9 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
       <div id="map"></div>
       <div class="map-layer-btns">
         <button class="layer-btn" onclick="switchLayer('street',this)">Đường</button>
-        <button class="layer-btn active" onclick="switchLayer('satellite',this)">Vệ tinh</button>
+        <button class="layer-btn active" id="btnSatellite" onclick="switchLayer('satellite',this)">Vệ tinh</button>
         <button class="layer-btn" onclick="switchLayer('topo',this)">Địa hình</button>
+        <button class="layer-btn label-btn" id="btnLabels" onclick="toggleLabels(this)" title="Bật/tắt địa danh trên vệ tinh">🏷 Nhãn</button>
       </div>
       <div class="map-tip" id="mapTip">🖱 Click vào bản đồ để chọn tọa độ · Kéo ghim để di chuyển</div>
     </div>
@@ -388,12 +393,47 @@ const LAYERS = {
   )
 };
 
+// Esri hybrid reference overlay — địa danh/đường phủ lên vệ tinh
+const LABEL_OVERLAY = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 19, attribution: 'Esri', opacity: 1, zIndex: 10 }
+);
+
+let _labelsOn = false;
+let _currentLayerName = 'satellite';
+
 function switchLayer(name, btn) {
   if (currentLayer) map.removeLayer(currentLayer);
   currentLayer = LAYERS[name];
   currentLayer.addTo(map);
-  document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+  _currentLayerName = name;
+  document.querySelectorAll('.layer-btn:not(.label-btn)').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+
+  // Label overlay chỉ hiện trên satellite; ẩn nút khi ở street/topo
+  const lblBtn = document.getElementById('btnLabels');
+  if (name === 'satellite') {
+    lblBtn.style.display = '';
+    // Nếu đang bật nhãn thì re-add overlay (vì layer vừa reset)
+    if (_labelsOn) { LABEL_OVERLAY.addTo(map); } else { map.removeLayer(LABEL_OVERLAY); }
+  } else {
+    lblBtn.style.display = 'none';
+    map.removeLayer(LABEL_OVERLAY);
+  }
+}
+
+function toggleLabels(btn) {
+  if (_currentLayerName !== 'satellite') return;
+  _labelsOn = !_labelsOn;
+  if (_labelsOn) {
+    LABEL_OVERLAY.addTo(map);
+    btn.classList.add('on');
+    showToast('🏷 Địa danh: Bật');
+  } else {
+    map.removeLayer(LABEL_OVERLAY);
+    btn.classList.remove('on');
+    showToast('🏷 Địa danh: Tắt');
+  }
 }
 
 // ── Map init ──
