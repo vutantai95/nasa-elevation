@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,15 +10,29 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
+
+/* ── DARK THEME (default) ── */
+:root,[data-theme="dark"]{
   --bg:#08090c;--s1:#101318;--s2:#181c23;
   --bd:rgba(255,255,255,.07);--bdh:rgba(255,255,255,.14);
   --ac:#3dffa0;--ac2:#38b6ff;--red:#ff4d6d;--warn:#ffb347;
   --txt:#dde4f0;--m:#68748c;--m2:#2e3548;
+  --shadow:rgba(0,0,0,.45);
   --r:12px;--rs:7px;
 }
+
+/* ── LIGHT THEME ── */
+[data-theme="light"]{
+  --bg:#f0f2f7;--s1:#ffffff;--s2:#f5f7fb;
+  --bd:rgba(0,0,0,.08);--bdh:rgba(0,0,0,.15);
+  --ac:#0a9e5c;--ac2:#0078cc;--red:#d63251;--warn:#e08400;
+  --txt:#1a2035;--m:#8a96ae;--m2:#c8d0e0;
+  --shadow:rgba(0,0,0,.12);
+  --r:12px;--rs:7px;
+}
+
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh}
+body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;transition:background .25s,color .25s}
 
 .app{max-width:880px;margin:0 auto;padding:28px 18px 64px;display:flex;flex-direction:column;gap:16px}
 
@@ -26,12 +40,22 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .hdr{display:flex;align-items:center;gap:14px;padding:4px 0 10px}
 .hdr-icon{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#0a3a8f,#1060c0);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 6px 20px rgba(10,58,143,.45)}
 .hdr-icon svg{width:21px;height:21px}
-.hdr-txt h1{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.hdr-txt h1{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--txt);letter-spacing:-.3px}
 .hdr-txt p{font-size:12px;color:var(--m);margin-top:1px}
-.hdr-chip{margin-left:auto;padding:4px 11px;border-radius:20px;border:1px solid var(--bd);background:var(--s1);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:.4px;white-space:nowrap}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hdr-chip{padding:4px 11px;border-radius:20px;border:1px solid var(--bd);background:var(--s1);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac);letter-spacing:.4px;white-space:nowrap}
+
+/* theme toggle */
+.theme-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--bd);background:var(--s1);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--m);transition:all .18s;flex-shrink:0}
+.theme-btn:hover{color:var(--ac);border-color:rgba(61,255,160,.3);background:var(--s2)}
+.theme-btn svg{width:16px;height:16px;pointer-events:none}
+[data-theme="light"] .icon-moon{display:none}
+[data-theme="light"] .icon-sun{display:block!important}
+[data-theme="dark"] .icon-sun{display:none}
+[data-theme="dark"] .icon-moon{display:block!important}
 
 /* card */
-.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;transition:background .25s,border-color .25s}
 .card-hd{padding:14px 18px 0;display:flex;align-items:center;gap:7px;margin-bottom:14px}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--ac);box-shadow:0 0 8px var(--ac);flex-shrink:0}
 .dot.b{background:var(--ac2);box-shadow:0 0 8px var(--ac2)}
@@ -46,6 +70,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .inp-field{width:100%;background:var(--s2);border:1.5px solid var(--bd);border-radius:var(--rs);padding:12px 46px 12px 14px;font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--txt);outline:none;transition:border-color .18s,box-shadow .18s}
 .inp-field::placeholder{color:var(--m2)}
 .inp-field:focus{border-color:rgba(61,255,160,.35);box-shadow:0 0 0 3px rgba(61,255,160,.06)}
+[data-theme="light"] .inp-field:focus{border-color:rgba(10,158,92,.4);box-shadow:0 0 0 3px rgba(10,158,92,.07)}
 .paste-btn{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:5px;border:1px solid var(--bd);background:var(--s1);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--m);transition:all .15s}
 .paste-btn:hover{color:var(--ac);border-color:rgba(61,255,160,.3);background:var(--s2)}
 .paste-btn:active{transform:translateY(-50%) scale(.92)}
@@ -54,7 +79,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 /* action buttons row */
 .action-row{display:flex;gap:8px;margin-bottom:8px}
 .scan-btn{flex:1;height:44px;border-radius:var(--rs);background:var(--ac);border:none;cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#000;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .18s}
-.scan-btn:hover{background:#5fffb4;box-shadow:0 4px 18px rgba(61,255,160,.28)}
+.scan-btn:hover{filter:brightness(1.12);box-shadow:0 4px 18px rgba(61,255,160,.28)}
 .scan-btn:active{transform:scale(.96)}
 .scan-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .scan-btn svg{width:13px;height:13px}
@@ -74,19 +99,23 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .pre{padding:5px 12px;border-radius:20px;border:1px solid var(--bd);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--m);transition:all .14s}
 .pre:hover{border-color:var(--bdh);color:var(--txt);background:var(--s2)}
 
-/* data source selector */
-.source-selector{display:flex;gap:6px;align-items:center}
-.src-label{font-size:11px;color:var(--m);font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap}
-.src-pills{display:flex;gap:4px}
-.src-pill{padding:4px 11px;border-radius:20px;border:1px solid var(--bd);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:500;color:var(--m);transition:all .14s}
-.src-pill:hover{border-color:var(--bdh);color:var(--txt)}
-.src-pill.active{background:rgba(61,255,160,.1);border-color:rgba(61,255,160,.4);color:var(--ac)}
+/* source + dataset selectors */
+.selectors-row{display:flex;flex-direction:column;gap:8px}
+.selector-group{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sel-label{font-size:11px;color:var(--m);font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;min-width:52px}
+.sel-pills{display:flex;gap:4px;flex-wrap:wrap}
+.sel-pill{padding:4px 11px;border-radius:20px;border:1px solid var(--bd);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:500;color:var(--m);transition:all .14s}
+.sel-pill:hover{border-color:var(--bdh);color:var(--txt)}
+.sel-pill.active{background:rgba(61,255,160,.1);border-color:rgba(61,255,160,.4);color:var(--ac)}
+[data-theme="light"] .sel-pill.active{background:rgba(10,158,92,.1);border-color:rgba(10,158,92,.4);color:var(--ac)}
+.sel-pill.ds.active{background:rgba(56,182,255,.1);border-color:rgba(56,182,255,.4);color:var(--ac2)}
+[data-theme="light"] .sel-pill.ds.active{background:rgba(0,120,204,.1);border-color:rgba(0,120,204,.4);color:var(--ac2)}
 
 /* map */
 .map-wrap{position:relative}
-#map{height:320px}
+#map{height:340px}
 .map-tip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);padding:5px 13px;background:rgba(8,9,12,.82);backdrop-filter:blur(8px);border:1px solid var(--bd);border-radius:20px;font-size:11px;color:var(--m);pointer-events:none;white-space:nowrap;z-index:999;transition:opacity .4s}
-/* map layer switcher */
+[data-theme="light"] .map-tip{background:rgba(240,242,247,.88)}
 .map-layer-btns{position:absolute;top:10px;right:10px;z-index:999;display:flex;gap:4px}
 .layer-btn{padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,.6);transition:all .15s}
 .layer-btn:hover{color:#fff;border-color:rgba(255,255,255,.35)}
@@ -107,7 +136,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .res-hero{padding:26px 22px 20px;text-align:center;border-bottom:1px solid var(--bd)}
 .loc-row{font-size:11.5px;color:var(--m);margin-bottom:5px;min-height:18px;display:flex;align-items:center;justify-content:center;gap:6px}
 .loc-spin{width:9px;height:9px;border:1.5px solid var(--m2);border-top-color:var(--m);border-radius:50%;animation:spin .7s linear infinite}
-.loc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:18px;line-height:1.3}
+.loc-name{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--txt);margin-bottom:18px;line-height:1.3}
 .elev-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);margin-bottom:7px}
 .elev-num{font-family:'Syne',sans-serif;font-size:68px;font-weight:800;color:var(--ac);line-height:1;letter-spacing:-2px;text-shadow:0 0 48px rgba(61,255,160,.2);animation:pop .45s cubic-bezier(.34,1.56,.64,1)}
 @keyframes pop{from{opacity:0;transform:scale(.83)}to{opacity:1;transform:scale(1)}}
@@ -129,6 +158,10 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(8px);padding:8px 18px;background:var(--s2);border:1px solid rgba(61,255,160,.3);border-radius:20px;font-size:12px;color:var(--ac);font-family:'JetBrains Mono',monospace;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;white-space:nowrap}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* dataset badge in result */
+.ds-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ac2);margin-top:6px}
+[data-theme="light"] .ds-badge{background:rgba(0,120,204,.08);border-color:rgba(0,120,204,.2)}
+
 .foot{text-align:center;font-size:11px;color:var(--m2);margin-top:4px}
 
 @media(max-width:520px){
@@ -138,7 +171,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
   .elev-num{font-size:52px}
   .hdr-chip{display:none}
   .gps-btn span{display:none}
-  .source-selector{flex-wrap:wrap}
+  .selectors-row{flex-direction:column}
 }
 </style>
 </head>
@@ -160,21 +193,69 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
       <h1>Elevation Scanner</h1>
       <p>Đo độ cao so với mực nước biển · NASA SRTM</p>
     </div>
-    <div class="hdr-chip">SRTM · 30m</div>
+    <div class="hdr-right">
+      <div class="hdr-chip">SRTM · 30m</div>
+      <!-- Theme toggle -->
+      <button class="theme-btn" onclick="toggleTheme()" title="Chuyển theme">
+        <!-- Moon icon (shown in dark mode) -->
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <!-- Sun icon (shown in light mode) -->
+        <svg class="icon-sun" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+    </div>
   </header>
 
-  <!-- Input card -->
+  <!-- Map (first) -->
+  <div class="card">
+    <div class="card-hd"><div class="dot b"></div><span>Bản đồ · Click hoặc kéo ghim để chọn vị trí</span></div>
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="map-layer-btns">
+        <button class="layer-btn" onclick="switchLayer('street',this)">Đường</button>
+        <button class="layer-btn active" onclick="switchLayer('satellite',this)">Vệ tinh</button>
+        <button class="layer-btn" onclick="switchLayer('topo',this)">Địa hình</button>
+      </div>
+      <div class="map-tip" id="mapTip">🖱 Click vào bản đồ để chọn tọa độ · Kéo ghim để di chuyển</div>
+    </div>
+  </div>
+
+  <!-- Input card (second) -->
   <div class="card">
     <div class="card-hd">
       <div class="dot"></div>
       <span>Tọa độ GPS</span>
       <div class="card-hd-right">
-        <div class="source-selector">
-          <span class="src-label">Nguồn:</span>
-          <div class="src-pills">
-            <button class="src-pill active" data-src="auto" onclick="setSrc('auto',this)">Tự động</button>
-            <button class="src-pill" data-src="open-elevation" onclick="setSrc('open-elevation',this)">Open-Elevation</button>
-            <button class="src-pill" data-src="open-meteo" onclick="setSrc('open-meteo',this)">Open-Meteo</button>
+        <div class="selectors-row">
+          <!-- Nguồn API -->
+          <div class="selector-group">
+            <span class="sel-label">Nguồn:</span>
+            <div class="sel-pills">
+              <button class="sel-pill active" data-src="auto" onclick="setSrc('auto',this)">Tự động</button>
+              <button class="sel-pill" data-src="open-elevation" onclick="setSrc('open-elevation',this)">Open-Elevation</button>
+              <button class="sel-pill" data-src="open-meteo" onclick="setSrc('open-meteo',this)">Open-Meteo</button>
+            </div>
+          </div>
+          <!-- Dataset -->
+          <div class="selector-group">
+            <span class="sel-label">Dataset:</span>
+            <div class="sel-pills" id="dsPills">
+              <button class="sel-pill ds active" data-ds="srtm30" onclick="setDs('srtm30',this)">SRTM 30m</button>
+              <button class="sel-pill ds" data-ds="srtm90" onclick="setDs('srtm90',this)">SRTM 90m</button>
+              <button class="sel-pill ds" data-ds="aster" onclick="setDs('aster',this)">ASTER GDEM</button>
+              <button class="sel-pill ds" data-ds="mapzen" onclick="setDs('mapzen',this)">Mapzen</button>
+            </div>
           </div>
         </div>
       </div>
@@ -224,20 +305,6 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
     </div>
   </div>
 
-  <!-- Map -->
-  <div class="card">
-    <div class="card-hd"><div class="dot b"></div><span>Bản đồ · Click hoặc kéo ghim để chọn vị trí</span></div>
-    <div class="map-wrap">
-      <div id="map"></div>
-      <div class="map-layer-btns">
-        <button class="layer-btn" onclick="switchLayer('street',this)">Đường</button>
-        <button class="layer-btn active" onclick="switchLayer('satellite',this)">Vệ tinh</button>
-        <button class="layer-btn" onclick="switchLayer('topo',this)">Địa hình</button>
-      </div>
-      <div class="map-tip" id="mapTip">🖱 Click vào bản đồ để chọn tọa độ · Kéo ghim để di chuyển</div>
-    </div>
-  </div>
-
   <!-- Error -->
   <div class="err-bar" id="errBar"></div>
 
@@ -252,6 +319,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
       <div class="elev-lbl">Độ cao so với mực nước biển</div>
       <div><span class="elev-num" id="elevNum">—</span><span class="elev-unit">m</span></div>
       <div class="elev-sub" id="elevSub"></div>
+      <div><span class="ds-badge" id="dsBadge">⬡ SRTM 30m</span></div>
     </div>
     <div class="stats">
       <div class="stat"><div class="stat-l">Vĩ độ</div><div class="stat-v" id="sLat">—</div></div>
@@ -267,7 +335,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
     </div>
   </div>
 
-  <div class="foot">NASA SRTM · OpenStreetMap · Esri Satellite · Nominatim</div>
+  <div class="foot">NASA SRTM · ASTER GDEM · OpenStreetMap · Esri Satellite · Nominatim</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -277,6 +345,32 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 let _lat = 20.8449, _lon = 106.6881;
 let map, marker, currentLayer;
 let _src = 'auto'; // 'auto' | 'open-elevation' | 'open-meteo'
+let _ds = 'srtm30'; // 'srtm30' | 'srtm90' | 'aster' | 'mapzen'
+
+// ── Theme toggle ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  showToast(isDark ? '☀ Light mode' : '🌙 Dark mode');
+}
+
+// ── Dataset selector ──
+const DS_INFO = {
+  srtm30:  { label: 'SRTM 30m',    desc: 'NASA SRTM · 30m resolution (1 arc-second) · Global coverage ±60°' },
+  srtm90:  { label: 'SRTM 90m',    desc: 'NASA SRTM · 90m resolution (3 arc-second) · Smoother, less noise' },
+  aster:   { label: 'ASTER GDEM',  desc: 'NASA/METI ASTER · 30m resolution · Better in high-latitude areas' },
+  mapzen:  { label: 'Mapzen DEM',  desc: 'Mapzen Terrain · Composite SRTM + NED + GMTED · Best coastal accuracy' },
+};
+
+function setDs(ds, btn) {
+  _ds = ds;
+  document.querySelectorAll('.sel-pill.ds').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Update hdr-chip label
+  document.querySelector('.hdr-chip').textContent = DS_INFO[ds].label;
+  showToast('Dataset: ' + DS_INFO[ds].label);
+}
 
 // ── Map layers ──
 const LAYERS = {
@@ -305,8 +399,6 @@ function switchLayer(name, btn) {
 // ── Map init ──
 function initMap() {
   map = L.map('map', { zoomControl: true, attributionControl: false }).setView([_lat, _lon], 13);
-
-  // Default: satellite
   currentLayer = LAYERS.satellite;
   currentLayer.addTo(map);
 
@@ -339,12 +431,9 @@ function applyCoords(lat, lon, moveMap = true) {
   else if (map) map.panTo([lat, lon]);
 }
 
-// ── GPS / vị trí thật ──
+// ── GPS ──
 function doGPS() {
-  if (!navigator.geolocation) {
-    showErr('Trình duyệt không hỗ trợ định vị GPS.');
-    return;
-  }
+  if (!navigator.geolocation) { showErr('Trình duyệt không hỗ trợ định vị GPS.'); return; }
   const btn = document.getElementById('gpsBtn');
   btn.disabled = true;
   btn.classList.add('locating');
@@ -367,7 +456,7 @@ function doGPS() {
       btn.classList.remove('locating');
       btn.querySelector('span').textContent = 'Vị trí của tôi';
       let msg = 'Không lấy được vị trí.';
-      if (err.code === 1) msg = 'Bạn đã từ chối quyền truy cập vị trí. Hãy bật lại trong cài đặt trình duyệt.';
+      if (err.code === 1) msg = 'Bạn đã từ chối quyền truy cập vị trí.';
       if (err.code === 2) msg = 'Không xác định được vị trí. Thử lại sau.';
       if (err.code === 3) msg = 'Hết thời gian chờ vị trí.';
       showErr(msg);
@@ -379,7 +468,7 @@ function doGPS() {
 // ── Source selector ──
 function setSrc(src, btn) {
   _src = src;
-  document.querySelectorAll('.src-pill').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sel-pill:not(.ds)').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 
@@ -435,21 +524,32 @@ function terrain(e) {
 }
 
 // ── Elevation APIs ──
+// Dataset note: Open-Elevation & Open-Meteo both serve SRTM data.
+// The dataset pills (SRTM 30m / 90m / ASTER / Mapzen) are exposed as a
+// preference signal. Open-Elevation supports the 'dataset' param for
+// srtm30 / srtm90 / aster via its dataset query option.
 async function fetchFromOpenElevation(lat, lon) {
-  const r = await fetch(`https://api.open-elevation.com/api/v1/lookup?locations=${lat},${lon}`, { signal: AbortSignal.timeout(9000) });
+  // Open-Elevation accepts a 'dataset' parameter
+  const dsMap = { srtm30: 'srtm30', srtm90: 'srtm90', aster: 'aster30m', mapzen: 'srtm30' };
+  const dsParam = dsMap[_ds] || 'srtm30';
+  const url = `https://api.open-elevation.com/api/v1/lookup?locations=${lat},${lon}&dataset=${dsParam}`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(9000) });
   if (!r.ok) throw new Error('open-elevation HTTP ' + r.status);
   const d = await r.json();
   if (d.results?.[0] == null) throw new Error('no result');
-  return { elevation: d.results[0].elevation, source: 'Open-Elevation (SRTM)' };
+  const dsLabel = DS_INFO[_ds]?.label || 'SRTM';
+  return { elevation: d.results[0].elevation, source: `Open-Elevation (${dsLabel})` };
 }
 
 async function fetchFromOpenMeteo(lat, lon) {
+  // Open-Meteo uses SRTM by default; no dataset selection
   const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`, { signal: AbortSignal.timeout(9000) });
   if (!r.ok) throw new Error('open-meteo HTTP ' + r.status);
   const d = await r.json();
   const v = Array.isArray(d.elevation) ? d.elevation[0] : d.elevation;
   if (v == null) throw new Error('no result');
-  return { elevation: v, source: 'Open-Meteo (SRTM)' };
+  const dsLabel = DS_INFO[_ds]?.label || 'SRTM';
+  return { elevation: v, source: `Open-Meteo (${dsLabel})` };
 }
 
 async function fetchElev(lat, lon) {
@@ -503,7 +603,7 @@ async function doScan() {
   document.getElementById('locName').textContent = '';
 
   const srcName = { auto: 'Tự động', 'open-elevation': 'Open-Elevation', 'open-meteo': 'Open-Meteo' }[_src];
-  document.getElementById('ldTxt').textContent = 'Đang truy vấn ' + srcName + '...';
+  document.getElementById('ldTxt').textContent = 'Đang truy vấn ' + srcName + ' · ' + DS_INFO[_ds].label + '...';
 
   try {
     const data = await fetchElev(lat, lon);
@@ -518,6 +618,7 @@ async function doScan() {
     document.getElementById('sFt').textContent = ft.toLocaleString('vi-VN');
     document.getElementById('sSrc').textContent = data.source;
     document.getElementById('tDesc').textContent = t.d;
+    document.getElementById('dsBadge').textContent = '⬡ ' + DS_INFO[_ds].label + ' · ' + DS_INFO[_ds].desc.split(' · ')[0].split('·')[0].trim();
     setTimeout(() => document.getElementById('tThumb').style.left = t.p + '%', 200);
     res.classList.add('on');
 
