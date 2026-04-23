@@ -114,10 +114,14 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 /* map */
 .map-wrap{position:relative}
 #map{height:340px}
-.map-tip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);padding:5px 13px;background:rgba(8,9,12,.82);backdrop-filter:blur(8px);border:1px solid var(--bd);border-radius:20px;font-size:11px;color:var(--m);pointer-events:none;white-space:nowrap;z-index:999;transition:opacity .4s}
+.map-tip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);padding:5px 13px;background:rgba(8,9,12,.82);backdrop-filter:blur(8px);border:1px solid var(--bd);border-radius:20px;font-size:11px;color:var(--m);pointer-events:none;white-space:nowrap;z-index:1000;transition:opacity .4s}
 [data-theme="light"] .map-tip{background:rgba(240,242,247,.88)}
-.map-layer-btns{position:absolute;top:10px;right:10px;z-index:999;display:flex;gap:4px}
-.layer-btn{padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,.6);transition:all .15s}
+.map-layer-btns{position:absolute;top:10px;right:10px;z-index:1000;display:flex;gap:4px;pointer-events:all}
+.map-gps-btn{position:absolute;bottom:10px;right:10px;z-index:1000;pointer-events:all;width:32px;height:32px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);transition:all .15s}
+.map-gps-btn:hover{color:#fff;border-color:var(--ac2);background:rgba(56,182,255,.15)}
+.map-gps-btn svg{width:14px;height:14px;pointer-events:none}
+.map-gps-btn.locating svg{animation:spin .8s linear infinite}
+.layer-btn{padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,.6);transition:all .15s;pointer-events:all}
 .layer-btn:hover{color:#fff;border-color:rgba(255,255,255,.35)}
 .layer-btn.active{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
 .layer-btn.label-btn{margin-left:6px;border-color:rgba(255,255,255,.1)}
@@ -130,8 +134,10 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .err-bar.on{display:block}
 
 /* loading */
-.ld{display:none;align-items:center;gap:11px;padding:18px;color:var(--m);font-size:13px}
+.ld{display:none;align-items:center;gap:11px;color:var(--m);font-size:13px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap}
 .ld.on{display:flex}
+.res-hero{position:relative}
+.res-hero .ld.on ~ *{opacity:.35;pointer-events:none}
 .spin{width:16px;height:16px;border:2px solid var(--bd);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -158,9 +164,6 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .t-thumb{position:absolute;top:50%;left:0;transform:translate(-50%,-50%);width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid var(--bg);box-shadow:0 0 0 2px var(--ac),0 2px 8px rgba(0,0,0,.5);transition:left 1s cubic-bezier(.34,1.56,.64,1)}
 .t-ticks{display:flex;justify-content:space-between;font-size:9.5px;color:var(--m2)}
 .t-desc{margin-top:9px;font-size:13px;color:var(--txt);font-weight:500}
-
-/* label overlay tile filter — chữ trắng viền đen kiểu Google Maps */
-.label-overlay-tile { filter: invert(1) hue-rotate(180deg) brightness(1.1) contrast(1.15); mix-blend-mode: screen; }
 
 /* toast */
 .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(8px);padding:8px 18px;background:var(--s2);border:1px solid rgba(61,255,160,.3);border-radius:20px;font-size:12px;color:var(--ac);font-family:'JetBrains Mono',monospace;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;white-space:nowrap}
@@ -235,8 +238,14 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
         <button class="layer-btn" onclick="switchLayer('street',this)">Đường</button>
         <button class="layer-btn active" id="btnSatellite" onclick="switchLayer('satellite',this)">Vệ tinh</button>
         <button class="layer-btn" onclick="switchLayer('topo',this)">Địa hình</button>
-        <button class="layer-btn label-btn" id="btnLabels" onclick="toggleLabels(this)" title="Bật/tắt địa danh trên vệ tinh">🏷 Nhãn</button>
+        <button class="layer-btn label-btn" id="btnLabels" onclick="toggleLabels(this)" title="Bật/tắt địa danh">🏷 Nhãn</button>
       </div>
+      <button class="map-gps-btn" id="mapGpsBtn" onclick="doGPS()" title="Vị trí của tôi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          <circle cx="12" cy="12" r="8" opacity=".3"/>
+        </svg>
+      </button>
       <div class="map-tip" id="mapTip">🖱 Click vào bản đồ để chọn tọa độ · Kéo ghim để di chuyển</div>
     </div>
   </div>
@@ -317,12 +326,10 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
   <!-- Error -->
   <div class="err-bar" id="errBar"></div>
 
-  <!-- Loading -->
-  <div class="card"><div class="ld" id="ld"><div class="spin"></div><span id="ldTxt">Đang kết nối NASA SRTM...</span></div></div>
-
-  <!-- Result -->
+  <!-- Result (always visible, loading inline) -->
   <div class="card res on" id="res">
     <div class="res-hero">
+      <div class="ld" id="ld"><div class="spin"></div><span id="ldTxt">Đang kết nối...</span></div>
       <div class="loc-row" id="locRow"><span class="loc-spin"></span> Đang tìm tên khu vực...</div>
       <div class="loc-name" id="locName"></div>
       <div class="elev-lbl">Độ cao so với mực nước biển</div>
@@ -397,11 +404,10 @@ const LAYERS = {
   )
 };
 
-// Esri World Imagery Hybrid — satellite tile đã kèm sẵn chữ trắng viền đen
-// (cùng server Esri, không cần key riêng, chữ style giống Google Maps)
+// CartoDB dark_only_labels — chữ trắng mảnh trên satellite, không cần key
 const LABEL_OVERLAY = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-  { maxZoom: 19, attribution: 'Esri', opacity: 1, zIndex: 10, className: 'label-overlay-tile' }
+  'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+  { maxZoom: 19, subdomains: 'abcd', attribution: 'CartoDB', opacity: 1, zIndex: 10 }
 );
 
 let _labelsOn = false;
@@ -454,6 +460,12 @@ function initMap() {
 
   marker = L.marker([_lat, _lon], { icon: mkIcon(), draggable: true }).addTo(map);
 
+  // Ngăn click trên buttons lan xuống map
+  document.querySelectorAll('.map-layer-btns, .map-gps-btn').forEach(el => {
+    L.DomEvent.disableClickPropagation(el);
+    L.DomEvent.disableScrollPropagation(el);
+  });
+
   marker.on('dragend', e => {
     const p = e.target.getLatLng();
     applyCoords(+p.lat.toFixed(6), +p.lng.toFixed(6), false);
@@ -480,8 +492,9 @@ function applyCoords(lat, lon, moveMap = true) {
 function doGPS() {
   if (!navigator.geolocation) { showErr('Trình duyệt không hỗ trợ định vị GPS.'); return; }
   const btn = document.getElementById('gpsBtn');
-  btn.disabled = true;
-  btn.classList.add('locating');
+  const mapBtn = document.getElementById('mapGpsBtn');
+  btn.disabled = true; mapBtn.disabled = true;
+  btn.classList.add('locating'); mapBtn.classList.add('locating');
   btn.querySelector('span').textContent = 'Đang định vị...';
 
   navigator.geolocation.getCurrentPosition(
@@ -490,15 +503,15 @@ function doGPS() {
       const lon = +pos.coords.longitude.toFixed(6);
       applyCoords(lat, lon, true);
       map.setView([lat, lon], 15);
-      btn.disabled = false;
-      btn.classList.remove('locating');
+      btn.disabled = false; mapBtn.disabled = false;
+      btn.classList.remove('locating'); mapBtn.classList.remove('locating');
       btn.querySelector('span').textContent = 'Vị trí của tôi';
       showToast('📍 Đã lấy vị trí GPS');
       doScan();
     },
     err => {
-      btn.disabled = false;
-      btn.classList.remove('locating');
+      btn.disabled = false; mapBtn.disabled = false;
+      btn.classList.remove('locating'); mapBtn.classList.remove('locating');
       btn.querySelector('span').textContent = 'Vị trí của tôi';
       let msg = 'Không lấy được vị trí.';
       if (err.code === 1) msg = 'Bạn đã từ chối quyền truy cập vị trí.';
