@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elevation · NASA SRTM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;font-size:14px}
+
+/* ── Full screen map ── */
+#map{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+
+/* ── BASE BUTTON ── */
+.map-btn{
+  border:1px solid;
+  border-radius:7px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background .15s,border-color .15s,color .15s;
+  font-family:'DM Sans',sans-serif;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+  line-height:1;
+}
+.map-btn svg{pointer-events:none;flex-shrink:0}
+
+/* ── DARK THEME: nền đen đặc, chữ xanh nhạt ── */
+[data-theme="dark"] .map-btn{background:#0f1116;border-color:#252b3b;color:#a8b8d8}
+[data-theme="dark"] .map-btn:hover{background:#181d2a;border-color:#3a4460;color:#e0e8ff}
+[data-theme="dark"] .map-btn.active,[data-theme="dark"] .map-btn.on{background:#0f1116;border-color:#3dffa0;color:#3dffa0}
+
+/* ── LIGHT THEME: nền trắng đặc, chữ đen ── */
+[data-theme="light"] .map-btn{background:#ffffff;border-color:#c0c7d4;color:#2a3040}
+[data-theme="light"] .map-btn:hover{background:#f0f2f7;border-color:#7a8299;color:#000}
+[data-theme="light"] .map-btn.active,[data-theme="light"] .map-btn.on{background:#ffffff;border-color:#0a9e5c;color:#0a6e3f}
+
+/* ── TOP LEFT ── */
+.top-left{position:fixed;top:10px;left:10px;z-index:1000;display:flex;gap:5px;align-items:center}
+
+.theme-btn{width:34px;height:34px}
+.theme-btn svg{width:15px;height:15px}
+[data-theme="light"] .icon-moon{display:none}
+[data-theme="light"] .icon-sun{display:block!important}
+[data-theme="dark"] .icon-sun{display:none}
+[data-theme="dark"] .icon-moon{display:block!important}
+
+.paste-map-btn{width:34px;height:34px}
+.paste-map-btn svg{width:14px;height:14px}
+
+/* Search */
+.map-search{display:flex;align-items:center}
+.map-search-icon{width:34px;height:34px}
+.map-search-icon svg{width:14px;height:14px}
+.map-search-expanded{display:flex;align-items:center;overflow:hidden;width:0;opacity:0;transition:width .28s cubic-bezier(.4,0,.2,1),opacity .2s;pointer-events:none}
+.map-search.open .map-search-expanded{width:200px;opacity:1;pointer-events:all}
+.map-search.open .map-search-icon{border-radius:7px 0 0 7px;border-right:none}
+
+.map-search-input{flex:1;height:34px;padding:0 8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;outline:none;min-width:0;border-top:1px solid;border-bottom:1px solid;border-left:none;border-right:none}
+[data-theme="dark"] .map-search-input{background:#0f1116;border-color:#3dffa0;color:#fff}
+[data-theme="dark"] .map-search-input::placeholder{color:rgba(255,255,255,.3)}
+[data-theme="light"] .map-search-input{background:#fff;border-color:#0a9e5c;color:#1a2035}
+[data-theme="light"] .map-search-input::placeholder{color:#aaa}
+
+.map-search-enter{width:34px;height:34px;border-radius:0 7px 7px 0!important;border-left:none!important}
+.map-search.open .map-search-enter{border-left:none!important}
+.map-search-enter svg{width:14px;height:14px}
+
+/* ── TOP RIGHT ── */
+.top-right{position:fixed;top:10px;right:10px;z-index:1000;display:flex;gap:5px;align-items:center}
+.layer-btn{height:34px;padding:0 12px}
+.label-btn{padding:0 10px}
+
+/* ── BOTTOM RIGHT: GPS ── */
+.map-gps-btn{position:fixed;bottom:30px;right:10px;z-index:1000;width:34px;height:34px}
+.map-gps-btn svg{width:15px;height:15px}
+.map-gps-btn.locating svg{animation:spin .8s linear infinite}
+
+/* ── BOTTOM LEFT: Elevation badge ── */
+.map-elev-badge{
+  position:fixed;bottom:30px;left:10px;z-index:1000;pointer-events:none;
+  border:1px solid;border-radius:10px;padding:9px 15px 9px 13px;
+  display:flex;align-items:center;gap:13px;
+  opacity:0;transform:translateY(5px);transition:opacity .35s,transform .35s;
+  max-width:310px;
+}
+[data-theme="dark"] .map-elev-badge{background:#0f1116;border-color:rgba(61,255,160,.35)}
+[data-theme="light"] .map-elev-badge{background:#ffffff;border-color:rgba(10,158,92,.4)}
+.map-elev-badge.show{opacity:1;transform:translateY(0)}
+.meb-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;padding-right:13px}
+[data-theme="dark"] .meb-left{border-right:1px solid rgba(255,255,255,.1)}
+[data-theme="light"] .meb-left{border-right:1px solid rgba(0,0,0,.1)}
+.meb-num{font-family:'DM Sans',sans-serif;font-size:36px;font-weight:700;letter-spacing:-1.5px;line-height:1}
+[data-theme="dark"] .meb-num{color:#3dffa0}
+[data-theme="light"] .meb-num{color:#0a6e3f}
+.meb-unit{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+[data-theme="dark"] .meb-unit{color:rgba(61,255,160,.55)}
+[data-theme="light"] .meb-unit{color:#0a9e5c}
+.meb-right{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0}
+.meb-label{font-family:'Syne',sans-serif;font-size:8.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase}
+[data-theme="dark"] .meb-label{color:rgba(255,255,255,.35)}
+[data-theme="light"] .meb-label{color:#8a96ae}
+.meb-loc{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;line-height:1.35;word-break:break-word}
+[data-theme="dark"] .meb-loc{color:rgba(255,255,255,.85)}
+[data-theme="light"] .meb-loc{color:#1a2035}
+.meb-spin{width:12px;height:12px;border:2px solid rgba(61,255,160,.2);border-top-color:#3dffa0;border-radius:50%;animation:spin .7s linear infinite;position:absolute;top:8px;right:9px;opacity:0;transition:opacity .2s}
+.map-elev-badge.loading .meb-spin{opacity:1}
+
+/* Label tiles */
+.label-tile-invert{filter:invert(1) brightness(3.8) contrast(1.2) drop-shadow(0 0 2px rgba(0,0,0,.85)) drop-shadow(0 0 2px rgba(0,0,0,.5))}
+
+/* Hint bar */
+.hint-bar{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:1000;font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 14px;border-radius:20px;pointer-events:none;white-space:nowrap;border:1px solid;opacity:.9}
+[data-theme="dark"] .hint-bar{background:#0f1116;border-color:#252b3b;color:#5a6680}
+[data-theme="light"] .hint-bar{background:#fff;border-color:#c0c7d4;color:#8a96ae}
+.hint-bar .ok{color:#3dffa0}
+[data-theme="light"] .hint-bar .ok{color:#0a9e5c}
+.hint-bar .er{color:#ff4d6d}
+
+/* Toast */
+.toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%) translateY(8px);padding:8px 18px;border-radius:20px;font-size:12px;font-family:'JetBrains Mono',monospace;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:9999;white-space:nowrap;border:1px solid}
+[data-theme="dark"] .toast{background:#0f1116;border-color:rgba(61,255,160,.35);color:#3dffa0}
+[data-theme="light"] .toast{background:#fff;border-color:rgba(10,158,92,.4);color:#0a6e3f}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- TOP LEFT: Theme + Paste + Search -->
+<div class="top-left">
+  <button class="map-btn theme-btn" onclick="toggleTheme()" title="Chuyển theme sáng/tối">
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+    <svg class="icon-sun" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+
+  <button class="map-btn paste-map-btn" onclick="doPaste()" title="Dán tọa độ từ clipboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="2" width="6" height="4" rx="1.5"/>
+      <path d="M16 4h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1"/>
+      <path d="M9 12h6M9 16h4"/>
+    </svg>
+  </button>
+
+  <div class="map-search" id="mapSearch">
+    <button class="map-btn map-search-icon" onclick="toggleMapSearch()" title="Tìm kiếm tọa độ">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+    <div class="map-search-expanded">
+      <input class="map-search-input" id="mapSearchInput" type="text"
+        placeholder="20.8449, 106.6881"
+        oninput="onInput(this.value)"
+        onkeydown="if(event.key==='Enter'){doScan();toggleMapSearch()}"
+      >
+      <button class="map-btn map-search-enter" onclick="doScan();toggleMapSearch()" title="Quét độ cao">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP RIGHT: Layer buttons -->
+<div class="top-right">
+  <button class="map-btn layer-btn" onclick="switchLayer('street',this)">Đường</button>
+  <button class="map-btn layer-btn active" id="btnSatellite" onclick="switchLayer('satellite',this)">Vệ tinh</button>
+  <button class="map-btn layer-btn" onclick="switchLayer('topo',this)">Địa hình</button>
+  <button class="map-btn layer-btn label-btn" id="btnLabels" onclick="toggleLabels(this)">🏷 Nhãn</button>
+</div>
+
+<!-- BOTTOM RIGHT: GPS -->
+<button class="map-btn map-gps-btn" id="mapGpsBtn" onclick="doGPS()" title="Vị trí của tôi">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+    <circle cx="12" cy="12" r="8" opacity=".3"/>
+  </svg>
+</button>
+
+<!-- BOTTOM LEFT: Elevation badge -->
+<div class="map-elev-badge" id="mapElevBadge">
+  <div class="meb-spin"></div>
+  <div class="meb-left">
+    <span class="meb-num" id="mapElevNum">—</span>
+    <span class="meb-unit">mét</span>
+  </div>
+  <div class="meb-right">
+    <span class="meb-label">Độ cao · SRTM</span>
+    <span class="meb-loc" id="mapElevLoc">Đang xác định vị trí...</span>
+  </div>
+</div>
+
+<!-- Hint bar -->
+<div class="hint-bar" id="hint"><span class="ok">✓</span> Lat: 20.84490 · Lon: 106.68810</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Hidden coord input -->
+<input type="hidden" id="coordInput" value="20.8449° N, 106.6881° E">
+
+<script>
+let _lat = 20.8449, _lon = 106.6881;
+let map, marker, currentLayer;
+let _src = 'open-meteo';
+let _ds = 'srtm30';
+
+const DS_INFO = {
+  srtm30:  { label: 'SRTM 30m' },
+  srtm90:  { label: 'SRTM 90m' },
+  aster:   { label: 'ASTER GDEM' },
+  mapzen:  { label: 'Mapzen DEM' },
+};
+
+function toggleMapSearch() {
+  const ms = document.getElementById('mapSearch');
+  const inp = document.getElementById('mapSearchInput');
+  const isOpen = ms.classList.toggle('open');
+  if (isOpen) {
+    setTimeout(() => inp.focus(), 280);
+    L.DomEvent.disableClickPropagation(ms);
+    L.DomEvent.disableScrollPropagation(ms);
+  }
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  showToast(isDark ? '☀ Nền trắng' : '🌙 Nền đen');
+}
+
+const LAYERS = {
+  satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri'}),
+  street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'OSM'}),
+  topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17,attribution:'OpenTopoMap'})
+};
+
+const LABEL_TILE = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:19,opacity:1,subdomains:'abcd',className:'label-tile-invert'});
+let _labelLayer = LABEL_TILE;
+let _labelsOn = false;
+
+function switchLayer(name, btn) {
+  if (currentLayer) map.removeLayer(currentLayer);
+  currentLayer = LAYERS[name];
+  currentLayer.addTo(map);
+  document.querySelectorAll('.layer-btn:not(.label-btn)').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (_labelsOn) { map.removeLayer(_labelLayer); _labelLayer.addTo(map); }
+}
+
+function toggleLabels(btn) {
+  _labelsOn = !_labelsOn;
+  if (_labelsOn) { _labelLayer.addTo(map); btn.classList.add('on'); showToast('🏷 Địa danh: Bật'); }
+  else { map.removeLayer(_labelLayer); btn.classList.remove('on'); showToast('🏷 Địa danh: Tắt'); }
+}
+
+function initMap() {
+  map = L.map('map', { zoomControl: true, attributionControl: false }).setView([_lat, _lon], 13);
+  currentLayer = LAYERS.satellite;
+  currentLayer.addTo(map);
+
+  // Dời zoom control xuống dưới để không đè với top-left buttons
+  map.zoomControl.setPosition('bottomright');
+
+  const mkIcon = () => L.divIcon({
+    html:`<div style="width:18px;height:18px;background:#3dffa0;border:2.5px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 10px rgba(0,0,0,.6),0 0 0 3px rgba(61,255,160,.25)"></div>`,
+    iconSize:[18,18],iconAnchor:[9,18],className:''
+  });
+
+  marker = L.marker([_lat, _lon], { icon: mkIcon(), draggable: true }).addTo(map);
+
+  document.querySelectorAll('.top-left,.top-right,.map-gps-btn,.map-elev-badge').forEach(el => {
+    L.DomEvent.disableClickPropagation(el);
+    L.DomEvent.disableScrollPropagation(el);
+  });
+
+  marker.on('dragend', e => {
+    const p = e.target.getLatLng();
+    applyCoords(+p.lat.toFixed(6), +p.lng.toFixed(6), false, true);
+  });
+
+  map.on('click', e => {
+    applyCoords(+e.latlng.lat.toFixed(6), +e.latlng.lng.toFixed(6), false, true);
+  });
+}
+
+function applyCoords(lat, lon, moveMap=true, autoScan=false) {
+  _lat = lat; _lon = lon;
+  const coordVal = lat + '° N, ' + lon + '° E';
+  document.getElementById('coordInput').value = coordVal;
+  document.getElementById('mapSearchInput').value = coordVal;
+  document.getElementById('hint').innerHTML = '<span class="ok">✓</span> Lat: ' + lat + ' · Lon: ' + lon;
+  if (marker) marker.setLatLng([lat, lon]);
+  if (map && moveMap) map.setView([lat, lon], map.getZoom());
+  else if (map) map.panTo([lat, lon]);
+  if (autoScan) doScan();
+}
+
+function doGPS() {
+  if (!navigator.geolocation) { showToast('⚠ Trình duyệt không hỗ trợ GPS'); return; }
+  const btn = document.getElementById('mapGpsBtn');
+  btn.disabled = true; btn.classList.add('locating');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = +pos.coords.latitude.toFixed(6);
+      const lon = +pos.coords.longitude.toFixed(6);
+      applyCoords(lat, lon, true);
+      map.setView([lat, lon], 15);
+      btn.disabled = false; btn.classList.remove('locating');
+      showToast('📍 Đã lấy vị trí GPS');
+      doScan();
+    },
+    err => {
+      btn.disabled = false; btn.classList.remove('locating');
+      let msg = 'Không lấy được vị trí.';
+      if (err.code === 1) msg = 'Từ chối quyền truy cập vị trí.';
+      if (err.code === 2) msg = 'Không xác định được vị trí.';
+      if (err.code === 3) msg = 'Hết thời gian chờ.';
+      showToast('⚠ ' + msg);
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+function onInput(raw) {
+  document.getElementById('coordInput').value = raw;
+  const nums = raw.replace(/[°′″'"]/g,' ').match(/-?\d+(?:\.\d+)?/g);
+  if (!nums || nums.length < 2) {
+    document.getElementById('hint').innerHTML = '<span class="er">⚠ Không nhận dạng được tọa độ</span>';
+    return false;
+  }
+  let lat = parseFloat(nums[0]), lon = parseFloat(nums[1]);
+  if (/S/i.test(raw)) lat = -Math.abs(lat);
+  if (/W/i.test(raw)) lon = -Math.abs(lon);
+  if (isNaN(lat)||isNaN(lon)||lat<-90||lat>90||lon<-180||lon>180) {
+    document.getElementById('hint').innerHTML = '<span class="er">⚠ Giá trị ngoài phạm vi</span>';
+    return false;
+  }
+  _lat = lat; _lon = lon;
+  document.getElementById('hint').innerHTML = '<span class="ok">✓</span> Lat: '+lat.toFixed(5)+' · Lon: '+lon.toFixed(5);
+  if (marker) { marker.setLatLng([lat, lon]); map.panTo([lat, lon]); }
+  return true;
+}
+
+async function doPaste() {
+  try {
+    const t = await navigator.clipboard.readText();
+    document.getElementById('coordInput').value = t;
+    document.getElementById('mapSearchInput').value = t;
+    if (onInput(t)) { showToast('✓ Đã dán — đang quét...'); doScan(); }
+    else showToast('⚠ Clipboard không có tọa độ hợp lệ');
+  } catch(e) { showToast('⚠ Không đọc được clipboard'); }
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), 2000);
+}
+
+async function fetchFromOpenElevation(lat, lon) {
+  const r = await fetch('https://api.open-elevation.com/api/v1/lookup', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({locations:[{latitude:lat,longitude:lon}]}),
+    signal:AbortSignal.timeout(10000)
+  });
+  if (!r.ok) throw new Error('open-elevation HTTP '+r.status);
+  const d = await r.json();
+  if (d.results?.[0] == null) throw new Error('no result');
+  return { elevation: d.results[0].elevation, source: 'Open-Elevation ('+DS_INFO[_ds].label+')' };
+}
+
+async function fetchFromOpenMeteo(lat, lon) {
+  const r = await fetch('https://api.open-meteo.com/v1/elevation?latitude='+lat+'&longitude='+lon, {signal:AbortSignal.timeout(9000)});
+  if (!r.ok) throw new Error('open-meteo HTTP '+r.status);
+  const d = await r.json();
+  const v = Array.isArray(d.elevation) ? d.elevation[0] : d.elevation;
+  if (v == null) throw new Error('no result');
+  return { elevation: v, source: 'Open-Meteo ('+DS_INFO[_ds].label+')' };
+}
+
+async function fetchElev(lat, lon) {
+  if (_src === 'open-elevation') {
+    try { return await fetchFromOpenElevation(lat, lon); } catch(e) {}
+  }
+  return fetchFromOpenMeteo(lat, lon);
+}
+
+async function fetchLoc(lat, lon) {
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&accept-language=vi',
+      {headers:{'User-Agent':'NASAElevationApp/1.0'},signal:AbortSignal.timeout(7000)});
+    if (!r.ok) return null;
+    const d = await r.json();
+    const a = d.address || {};
+    const parts = [];
+    const local = a.village||a.hamlet||a.suburb||a.neighbourhood||a.town||a.city_district;
+    const dist = a.county||a.district||a.city;
+    const prov = a.state||a.province;
+    if (local) parts.push(local);
+    if (dist && dist!==local) parts.push(dist);
+    if (prov && prov!==dist) parts.push(prov);
+    if (a.country) parts.push(a.country);
+    return parts.length ? parts.join(', ') : d.display_name;
+  } catch(e) { return null; }
+}
+
+async function doScan() {
+  if (!onInput(document.getElementById('coordInput').value)) {
+    showToast('⚠ Tọa độ không hợp lệ');
+    return;
+  }
+  const lat = _lat, lon = _lon;
+  const badge = document.getElementById('mapElevBadge');
+  badge.classList.add('show','loading');
+  document.getElementById('mapElevLoc').textContent = 'Đang xác định...';
+
+  try {
+    const data = await fetchElev(lat, lon);
+    const elev = Math.round(data.elevation * 10) / 10;
+    document.getElementById('mapElevNum').textContent = elev.toLocaleString('vi-VN');
+    badge.classList.remove('loading');
+    badge.classList.add('show');
+    fetchLoc(lat, lon).then(name => {
+      document.getElementById('mapElevLoc').textContent = name || 'Không xác định được';
+    });
+  } catch(e) {
+    badge.classList.remove('loading');
+    showToast('⚠ '+e.message);
+  }
+}
+
+window.addEventListener('load', () => {
+  initMap();
+  setTimeout(doScan, 400);
+});
+</script>
+</body>
+</html>
