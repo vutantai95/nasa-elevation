@@ -115,6 +115,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .map-wrap{position:relative}
 #map{height:340px}
 .map-tip{display:none}
+
 .map-layer-btns{position:absolute;top:10px;right:10px;z-index:1000;display:flex;gap:4px;pointer-events:all}
 .map-gps-btn{position:absolute;bottom:10px;right:10px;z-index:1000;pointer-events:all;width:32px;height:32px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(10,12,18,.85);backdrop-filter:blur(6px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.7);transition:all .15s}
 .map-gps-btn:hover{color:#fff;border-color:var(--ac2);background:rgba(56,182,255,.15)}
@@ -124,7 +125,7 @@ body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font
 .layer-btn:hover{color:#fff;border-color:rgba(255,255,255,.35)}
 .layer-btn.active{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
 .layer-btn.label-btn{margin-left:6px;border-color:rgba(255,255,255,.1)}
-.layer-btn.label-btn.on{background:rgba(255,179,71,.15);border-color:rgba(255,179,71,.55);color:var(--warn)}
+.layer-btn.label-btn.on{background:rgba(61,255,160,.15);border-color:rgba(61,255,160,.5);color:var(--ac)}
 
 
 /* error */
@@ -401,11 +402,89 @@ const LAYERS = {
   )
 };
 
-// ArcGIS World Boundaries and Places — chỉ địa danh, chữ trắng có outline đậm, rõ trên satellite
-const LABEL_OVERLAY = L.tileLayer(
-  'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-  { maxZoom: 19, attribution: 'Esri', opacity: 1, zIndex: 10 }
-);
+// Label layer — dùng Overpass API fetch địa danh, vẽ bằng Leaflet DivIcon
+let _labelLayer = L.layerGroup();
+
+async function fetchAndDrawLabels() {
+  if (!map) return;
+  const b = map.getBounds();
+  const zoom = map.getZoom();
+  const bbox = `${b.getSouth().toFixed(4)},${b.getWest().toFixed(4)},${b.getNorth().toFixed(4)},${b.getEast().toFixed(4)}`;
+
+  let placeTypes;
+  if (zoom < 7)        placeTypes = 'city|state';
+  else if (zoom < 10)  placeTypes = 'city|town';
+  else if (zoom < 13)  placeTypes = 'city|town|village|suburb';
+  else                 placeTypes = 'city|town|village|suburb|hamlet|neighbourhood|quarter';
+
+  const query = `[out:json][timeout:15];(node["place"~"${placeTypes}"]["name"](${bbox}););out body;`;
+
+  try {
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'data=' + encodeURIComponent(query),
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    _labelLayer.clearLayers();
+    if (d.elements && d.elements.length > 0) {
+      drawLabels(d.elements, zoom);
+    }
+  } catch(e) {
+    console.warn('Label fetch error:', e);
+  }
+}
+
+function drawLabels(elements, zoom) {
+  elements.forEach(el => {
+    if (!el.lat || !el.lon || !el.tags?.name) return;
+    const place = el.tags.place || '';
+    const name = el.tags.name;
+
+    // Kích thước và màu theo loại địa danh
+    let fontSize, color, fontWeight, textShadow, minZoom;
+    if (place === 'city') {
+      fontSize = zoom >= 10 ? '13px' : '11px';
+      color = '#ffffff'; fontWeight = '700';
+      textShadow = '0 0 4px #000,0 0 8px #000,0 0 12px #000,1px 1px 0 #000,-1px -1px 0 #000';
+      minZoom = 7;
+    } else if (place === 'town') {
+      fontSize = '11.5px'; color = '#e8eaf0'; fontWeight = '600';
+      textShadow = '0 0 3px #000,0 0 7px #000,1px 1px 0 #000,-1px -1px 0 #000';
+      minZoom = 9;
+    } else if (place === 'village' || place === 'suburb') {
+      fontSize = '10.5px'; color = '#c8ccd8'; fontWeight = '500';
+      textShadow = '0 0 3px #000,0 0 6px #000,1px 1px 0 #000';
+      minZoom = 11;
+    } else if (place === 'hamlet' || place === 'neighbourhood' || place === 'quarter') {
+      fontSize = '10px'; color = '#a0a8b8'; fontWeight = '400';
+      textShadow = '0 0 3px #000,0 0 5px #000';
+      minZoom = 13;
+    } else {
+      fontSize = '10px'; color = '#b0b8c8'; fontWeight = '400';
+      textShadow = '0 0 3px #000,0 0 5px #000';
+      minZoom = 12;
+    }
+
+    if (zoom < minZoom) return;
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<span style="font-family:'DM Sans',sans-serif;font-size:${fontSize};color:${color};font-weight:${fontWeight};text-shadow:${textShadow};white-space:nowrap;pointer-events:none;letter-spacing:.3px;">${name}</span>`,
+      iconAnchor: [0, 0]
+    });
+    L.marker([el.lat, el.lon], { icon, interactive: false, keyboard: false }).addTo(_labelLayer);
+  });
+}
+
+let _labelFetchTimer = null;
+function scheduleLabelFetch() {
+  if (!_labelsOn) return;
+  clearTimeout(_labelFetchTimer);
+  _labelFetchTimer = setTimeout(fetchAndDrawLabels, 400);
+}
 
 let _labelsOn = false;
 let _currentLayerName = 'satellite';
@@ -418,27 +497,20 @@ function switchLayer(name, btn) {
   document.querySelectorAll('.layer-btn:not(.label-btn)').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  // Label overlay chỉ hiện trên satellite; ẩn nút khi ở street/topo
-  const lblBtn = document.getElementById('btnLabels');
-  if (name === 'satellite') {
-    lblBtn.style.display = '';
-    // Nếu đang bật nhãn thì re-add overlay (vì layer vừa reset)
-    if (_labelsOn) { LABEL_OVERLAY.addTo(map); } else { map.removeLayer(LABEL_OVERLAY); }
-  } else {
-    lblBtn.style.display = 'none';
-    map.removeLayer(LABEL_OVERLAY);
-  }
+  // Re-add label layer nếu đang bật
+  if (_labelsOn) { _labelLayer.addTo(map); }
 }
 
 function toggleLabels(btn) {
-  if (_currentLayerName !== 'satellite') return;
   _labelsOn = !_labelsOn;
   if (_labelsOn) {
-    LABEL_OVERLAY.addTo(map);
+    if (!map.hasLayer(_labelLayer)) _labelLayer.addTo(map);
     btn.classList.add('on');
-    showToast('🏷 Địa danh: Bật');
+    showToast('🏷 Đang tải địa danh...');
+    fetchAndDrawLabels().then(() => showToast('🏷 Địa danh: Bật'));
   } else {
-    map.removeLayer(LABEL_OVERLAY);
+    _labelLayer.clearLayers();
+    if (map.hasLayer(_labelLayer)) map.removeLayer(_labelLayer);
     btn.classList.remove('on');
     showToast('🏷 Địa danh: Tắt');
   }
@@ -468,6 +540,7 @@ function initMap() {
     applyCoords(+p.lat.toFixed(6), +p.lng.toFixed(6), false, true);
   });
 
+  map.on('moveend zoomend', scheduleLabelFetch);
   map.on('click', e => {
     applyCoords(+e.latlng.lat.toFixed(6), +e.latlng.lng.toFixed(6), false, true);
   });
