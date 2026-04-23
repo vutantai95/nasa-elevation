@@ -403,12 +403,13 @@ const LAYERS = {
   )
 };
 
-// Label layer — Esri World Reference Overlay: chữ trắng/sáng trên nền trong suốt,
-// chỉ địa danh lớn (tỉnh, thành, núi, sông…), không có tên đường nhỏ,
-// thiết kế để chồng lên satellite tối — rõ nét, đúng màu
+// Label layer — Carto Dark Only Labels: chữ trắng/sáng trên nền trong suốt,
+// thiết kế cho nền tối như satellite, public CDN không cần token.
+// maxNativeZoom=13: chỉ hiện địa danh lớn (tỉnh, thành, quận…),
+// zoom cao hơn vẫn scale tile đó lên thay vì load tên đường mới
 const LABEL_TILE = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}',
-  { maxZoom: 19, opacity: 1 }
+  'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+  { maxZoom: 19, maxNativeZoom: 13, opacity: 1, subdomains: 'abcd' }
 );
 let _labelLayer = LABEL_TILE;
 
