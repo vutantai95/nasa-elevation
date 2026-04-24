@@ -285,7 +285,7 @@ html, body {
   <div class="floating-panel map-layer-btns" id="mapLayerBtns">
     <button class="layer-btn" id="btnStreet" onclick="switchLayer('street',this)">Street</button>
     <button class="layer-btn active" id="btnSatellite" onclick="switchLayer('satellite',this)">Satellite</button>
-    <button class="layer-btn" onclick="switchLayer('topo',this)">Topo</button>
+    <button class="layer-btn" onclick="switchLayer('topo',this)">Terrain</button>
     <button class="layer-btn label-btn on" id="btnLabels" onclick="toggleLabels(this)">Labels</button>
   </div>
 
@@ -361,7 +361,7 @@ html, body {
       <div class="mob-popup" id="mobLayerPopup">
         <button class="layer-btn" id="mobBtnStreet" onclick="mobSwitchLayer('street')">Street</button>
         <button class="layer-btn active" id="mobBtnSatellite" onclick="mobSwitchLayer('satellite')">Satellite</button>
-        <button class="layer-btn" id="mobBtnTopo" onclick="mobSwitchLayer('topo')">Topo</button>
+        <button class="layer-btn" id="mobBtnTopo" onclick="mobSwitchLayer('topo')">Terrain</button>
         <button class="layer-btn label-btn on" id="mobBtnLabels" onclick="mobToggleLabels()">Labels</button>
       </div>
     </div>
@@ -430,6 +430,10 @@ const LANG = {
     selected: "Đã chọn: ",
     labelsOn: "Nhãn: Bật",
     labelsOff: "Nhãn: Tắt",
+    layerStreet: "Đường xá",
+    layerSatellite: "Vệ tinh",
+    layerTopo: "Địa hình",
+    layerLabels: "Nhãn",
     t: [
       "🌊 Dưới mực nước biển",
       "🏖 Bờ biển / Đồng bằng thấp",
@@ -464,6 +468,10 @@ const LANG = {
     selected: "Selected: ",
     labelsOn: "Labels: On",
     labelsOff: "Labels: Off",
+    layerStreet: "Street",
+    layerSatellite: "Satellite",
+    layerTopo: "Terrain",
+    layerLabels: "Labels",
     t: [
       "🌊 Below Sea Level",
       "🏖 Coastal / Low Plains",
@@ -497,12 +505,26 @@ function updateLangUI() {
   document.getElementById('badgeDsLabel').textContent = `${l.lblElev} · ${DS_INFO[_ds].label}`;
   document.getElementById('terrainLabelText').textContent = l.lblTerrain;
   document.getElementById('tickSea').textContent = l.sea;
-  // Mobile popup (same elements, may not exist on desktop — guard with ?)
+  // Layer button names — desktop + mobile
+  const layerMap = {
+    btnStreet: 'layerStreet', btnSatellite: 'layerSatellite',
+    btnLabels: 'layerLabels',
+    mobBtnStreet: 'layerStreet', mobBtnSatellite: 'layerSatellite',
+    mobBtnTopo: 'layerTopo', mobBtnLabels: 'layerLabels'
+  };
+  // Topo desktop không có id riêng — query trực tiếp
+  document.querySelectorAll('.layer-btn:not(.label-btn)').forEach(b => {
+    if(b.id === 'btnStreet') b.textContent = l.layerStreet;
+    else if(b.id === 'btnSatellite') b.textContent = l.layerSatellite;
+    else b.textContent = l.layerTopo; // Topo
+  });
+  document.querySelectorAll('.layer-btn.label-btn').forEach(b => b.textContent = l.layerLabels);
+  // Mobile popup
   const mobSrc = document.getElementById('mobSrcLabel');
   const mobDs  = document.getElementById('mobDsLabel');
   if(mobSrc) mobSrc.textContent = l.lblSource;
   if(mobDs)  mobDs.textContent  = l.lblDataset;
-  // Sync lang button text in both desktop and mobile config
+  // Sync tất cả nút lang
   document.querySelectorAll('.lang-btn').forEach(b => b.textContent = currentLang.toUpperCase());
 }
 
