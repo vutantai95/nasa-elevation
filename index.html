@@ -183,6 +183,11 @@ html, body {
   .map-search-input { width: 210px; font-size: 10.5px; }
   .ac-dropdown { min-width: unset; max-width: calc(100vw - 20px); width: calc(100vw - 20px); right: 0; left: 0; }
 }
+
+@media(min-width: 769px) {
+  /* Desktop: layer buttons always at top: 10px, no need to adjust */
+  .map-layer-btns { top: 10px !important; }
+}
 </style>
 </head>
 <body>
@@ -891,7 +896,24 @@ async function doScan(){
 window.addEventListener('load',()=>{
   initMap();
   setTimeout(doScan,400);
+  adjustLayerBtns();
+  // Theo dõi khi search area thay đổi chiều cao (wrap)
+  const ro = new ResizeObserver(adjustLayerBtns);
+  ro.observe(document.getElementById('topSearchArea'));
 });
+
+function adjustLayerBtns() {
+  const layerBtns = document.getElementById('mapLayerBtns');
+  if(window.innerWidth > 768) {
+    layerBtns.style.top = '';
+    return;
+  }
+  const searchArea = document.getElementById('topSearchArea');
+  const rect = searchArea.getBoundingClientRect();
+  layerBtns.style.top = (rect.bottom + 8) + 'px';
+}
+
+window.addEventListener('resize', adjustLayerBtns);
 </script>
 </body>
 </html>
