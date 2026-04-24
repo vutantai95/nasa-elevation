@@ -74,7 +74,7 @@ html, body {
 #mapGpsBtn.locating svg { animation: spin .8s linear infinite; }
 
 /* 2. Location Presets */
-.map-presets { position: absolute; z-index: 999; top: 54px; left: 10px; display: flex; gap: 4px; padding: 4px; max-width: calc(100vw - 20px); overflow-x: auto; pointer-events: all; }
+.map-presets { position: static; z-index: 999; display: flex; gap: 4px; padding: 4px; width: 100%; overflow-x: auto; pointer-events: all; flex-shrink: 0; }
 .pre-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid transparent; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--txt); transition: all .14s; white-space: nowrap; }
 .pre-btn:hover { background: var(--s2); color: var(--ac); border-color: var(--bd); }
 
@@ -177,13 +177,8 @@ html, body {
 @media(max-width: 768px) {
   .map-config { bottom: 20px; left: 10px; right: auto; width: calc(100vw - 60px); }
   .map-elev-badge { bottom: 120px; left: 10px; width: 240px; }
-  /* Layer buttons: push down below search bar on mobile */
-  .map-layer-btns { top: 54px; }
-  /* GPS/Paste icon buttons: fixed size, don't shrink */
   .icon-btn { flex-shrink: 0; }
-  /* Search: size to fit coordinate text, buttons wrap on small screens */
   .map-search-input { width: 210px; font-size: 10.5px; }
-  /* Autocomplete dropdown: don't overflow screen */
   .ac-dropdown { min-width: unset; max-width: calc(100vw - 20px); width: calc(100vw - 20px); right: 0; left: 0; }
 }
 </style>
@@ -228,14 +223,14 @@ html, body {
         <circle cx="12" cy="12" r="8" opacity=".3"/>
       </svg>
     </button>
-  </div>
 
-  <div class="floating-panel map-presets" id="mapPresets">
-    <button class="pre-btn" onclick="setCoords(12.2459,109.1945)">Nha Trang</button>
-    <button class="pre-btn" onclick="setCoords(21.0285,105.8542)">Hà Nội</button>
-    <button class="pre-btn" onclick="setCoords(20.8449,106.6881)">Hải Phòng</button>
-    <button class="pre-btn" onclick="setCoords(16.0544,108.2022)">Đà Nẵng</button>
-    <button class="pre-btn" onclick="setCoords(10.7769,106.7009)">TP. HCM</button>
+    <div class="floating-panel map-presets" id="mapPresets">
+      <button class="pre-btn" onclick="setCoords(12.2459,109.1945)">Nha Trang</button>
+      <button class="pre-btn" onclick="setCoords(21.0285,105.8542)">Hà Nội</button>
+      <button class="pre-btn" onclick="setCoords(20.8449,106.6881)">Hải Phòng</button>
+      <button class="pre-btn" onclick="setCoords(16.0544,108.2022)">Đà Nẵng</button>
+      <button class="pre-btn" onclick="setCoords(10.7769,106.7009)">TP. HCM</button>
+    </div>
   </div>
 
   <div class="floating-panel map-layer-btns" id="mapLayerBtns">
