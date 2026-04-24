@@ -182,10 +182,50 @@ html, body {
   .icon-btn { flex-shrink: 0; }
   .map-search-input { width: 210px; font-size: 10.5px; }
   .ac-dropdown { min-width: unset; max-width: calc(100vw - 20px); width: calc(100vw - 20px); right: 0; left: 0; }
+
+  /* --- Mobile: ẩn panel gốc, hiện toggle buttons + popup panels --- */
+  .map-layer-btns { display: none !important; }
+  .map-config { display: none !important; }
+
+  /* Cụm 2 nút toggle ở góc phải */
+  .mob-toggle-group {
+    position: absolute; z-index: 1001; right: 10px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .mob-toggle-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--bd); background: var(--s3);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--m); transition: all .15s; box-shadow: 0 4px 16px var(--shadow);
+  }
+  .mob-toggle-btn:hover, .mob-toggle-btn.active { color: var(--ac); border-color: var(--ac); background: var(--s2); }
+  .mob-toggle-btn svg { width: 16px; height: 16px; pointer-events: none; }
+
+  /* Popup panels */
+  .mob-popup {
+    position: absolute; z-index: 1002; right: 54px;
+    background: var(--s3); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--bd); border-radius: 10px;
+    box-shadow: 0 8px 32px var(--shadow);
+    display: none; flex-direction: column;
+    overflow: hidden; min-width: 140px;
+    pointer-events: all;
+  }
+  .mob-popup.open { display: flex; }
+
+  /* Layer popup */
+  #mobLayerPopup { padding: 4px; gap: 2px; }
+  #mobLayerPopup .layer-btn { display: flex; }
+
+  /* Config popup */
+  #mobConfigPopup { padding: 10px 12px; gap: 10px; }
 }
 
 @media(min-width: 769px) {
-  /* Desktop: layer buttons always at top: 10px, no need to adjust */
+  .mob-toggle-group { display: none !important; }
+  .mob-popup { display: none !important; }
   .map-layer-btns { top: 10px !important; }
 }
 </style>
@@ -310,6 +350,56 @@ html, body {
       </div>
     </div>
   </div>
+
+  <!-- Mobile: toggle buttons + popup panels -->
+  <div class="mob-toggle-group" id="mobToggleGroup">
+    <!-- Layer toggle -->
+    <div style="position:relative">
+      <button class="mob-toggle-btn" id="mobLayerBtn" onclick="mobToggle('layer')" title="Chọn bản đồ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 12 2 21 6 12 10"/><polyline points="3 6 3 18 12 22 21 18 21 6"/><line x1="12" y1="10" x2="12" y2="22"/></svg>
+      </button>
+      <div class="mob-popup" id="mobLayerPopup">
+        <button class="layer-btn" id="mobBtnStreet" onclick="mobSwitchLayer('street')">Street</button>
+        <button class="layer-btn active" id="mobBtnSatellite" onclick="mobSwitchLayer('satellite')">Satellite</button>
+        <button class="layer-btn" id="mobBtnTopo" onclick="mobSwitchLayer('topo')">Topo</button>
+        <button class="layer-btn label-btn on" id="mobBtnLabels" onclick="mobToggleLabels()">Labels</button>
+      </div>
+    </div>
+    <!-- Config toggle -->
+    <div style="position:relative">
+      <button class="mob-toggle-btn" id="mobCfgBtn" onclick="mobToggle('cfg')" title="Cài đặt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/></svg>
+      </button>
+      <div class="mob-popup" id="mobConfigPopup">
+        <div class="cfg-row">
+          <span class="cfg-label" id="mobSrcLabel">Nguồn:</span>
+          <div class="cfg-pills">
+            <button class="cfg-pill active" id="mobPillMeteo" onclick="setSrc('open-meteo',this); syncMobSrc('open-meteo')">O-Meteo</button>
+            <button class="cfg-pill" id="mobPillElev" onclick="setSrc('open-elevation',this); syncMobSrc('open-elevation')">O-Elev</button>
+          </div>
+        </div>
+        <div class="cfg-row">
+          <div class="mini-btn-group">
+            <button class="theme-btn-mini lang-btn" onclick="toggleLang()" title="Chuyển ngôn ngữ">VI</button>
+            <button class="theme-btn-mini" onclick="toggleTheme()" title="Đổi giao diện">
+              <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <svg class="icon-sun" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="cfg-row">
+          <span class="cfg-label" id="mobDsLabel">Dữ liệu:</span>
+          <div class="cfg-pills" style="flex-wrap:wrap">
+            <button class="cfg-pill ds active" id="mobPillSrtm30" onclick="setDs('srtm30',this); syncMobDs('srtm30')">SRTM30</button>
+            <button class="cfg-pill ds" id="mobPillSrtm90" onclick="setDs('srtm90',this); syncMobDs('srtm90')">SRTM90</button>
+            <button class="cfg-pill ds" id="mobPillAster" onclick="setDs('aster',this); syncMobDs('aster')">ASTER</button>
+            <button class="cfg-pill ds" id="mobPillMapzen" onclick="setDs('mapzen',this); syncMobDs('mapzen')">Mapzen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -490,12 +580,15 @@ function switchLayer(name, btn) {
   } else if (_labelsOn) {
     map.removeLayer(LABEL_TILE); LABEL_TILE.addTo(map);
   }
+  if(typeof syncMobLayer === 'function') syncMobLayer(name);
+  if(typeof syncMobLabels === 'function') syncMobLabels();
 }
 
 function toggleLabels(btn) {
   _labelsOn = !_labelsOn;
   if (_labelsOn) { LABEL_TILE.addTo(map); btn.classList.add('on'); showToast(LANG[currentLang].labelsOn); }
   else { map.removeLayer(LABEL_TILE); btn.classList.remove('on'); showToast(LANG[currentLang].labelsOff); }
+  if(typeof syncMobLabels === 'function') syncMobLabels();
 }
 
 function initMap() {
@@ -897,23 +990,107 @@ window.addEventListener('load',()=>{
   initMap();
   setTimeout(doScan,400);
   adjustLayerBtns();
-  // Theo dõi khi search area thay đổi chiều cao (wrap)
   const ro = new ResizeObserver(adjustLayerBtns);
   ro.observe(document.getElementById('topSearchArea'));
 });
 
 function adjustLayerBtns() {
   const layerBtns = document.getElementById('mapLayerBtns');
+  const mobGroup = document.getElementById('mobToggleGroup');
   if(window.innerWidth > 768) {
     layerBtns.style.top = '';
     return;
   }
   const searchArea = document.getElementById('topSearchArea');
   const rect = searchArea.getBoundingClientRect();
-  layerBtns.style.top = (rect.bottom + 8) + 'px';
+  const newTop = (rect.bottom + 8) + 'px';
+  layerBtns.style.top = newTop;
+  if(mobGroup) mobGroup.style.top = newTop;
 }
 
 window.addEventListener('resize', adjustLayerBtns);
+
+// --- MOBILE PANEL TOGGLE ---
+let _mobOpen = null;
+
+function mobToggle(which) {
+  const layerPopup = document.getElementById('mobLayerPopup');
+  const cfgPopup   = document.getElementById('mobConfigPopup');
+  const layerBtn   = document.getElementById('mobLayerBtn');
+  const cfgBtn     = document.getElementById('mobCfgBtn');
+
+  if(_mobOpen === which) {
+    mobClose(); return;
+  }
+  mobClose();
+  _mobOpen = which;
+  if(which === 'layer') {
+    layerPopup.classList.add('open');
+    layerBtn.classList.add('active');
+  } else {
+    cfgPopup.classList.add('open');
+    cfgBtn.classList.add('active');
+  }
+}
+
+function mobClose() {
+  document.getElementById('mobLayerPopup').classList.remove('open');
+  document.getElementById('mobConfigPopup').classList.remove('open');
+  document.getElementById('mobLayerBtn').classList.remove('active');
+  document.getElementById('mobCfgBtn').classList.remove('active');
+  _mobOpen = null;
+}
+
+function mobSwitchLayer(name) {
+  // Dùng mobile btn làm active element, sync desktop btn luôn
+  const mobBtn = document.getElementById('mobBtn' + name.charAt(0).toUpperCase() + name.slice(1));
+  switchLayer(name, mobBtn);
+  // Sync desktop btn active state
+  document.querySelectorAll('.layer-btn:not(.label-btn)').forEach(b => b.classList.remove('active'));
+  const deskId = {street:'btnStreet', satellite:'btnSatellite', topo:'btnTopo'}[name];
+  if(deskId) document.getElementById(deskId)?.classList.add('active');
+  mobClose();
+}
+
+function mobToggleLabels() {
+  const mobBtn = document.getElementById('mobBtnLabels');
+  const deskBtn = document.getElementById('btnLabels');
+  toggleLabels(mobBtn);
+  // Sync desktop
+  if(deskBtn) { deskBtn.classList.toggle('on', _labelsOn); }
+}
+
+// Đồng bộ trạng thái active layer giữa desktop panel và mobile popup
+function syncMobLayer(name) {
+  ['Street','Satellite','Topo'].forEach(n => {
+    document.getElementById('mobBtn'+n)?.classList.remove('active');
+  });
+  const cap = name.charAt(0).toUpperCase() + name.slice(1);
+  document.getElementById('mobBtn'+cap)?.classList.add('active');
+}
+
+function syncMobLabels() {
+  const on = document.getElementById('btnLabels').classList.contains('on');
+  const mob = document.getElementById('mobBtnLabels');
+  if(mob) { mob.classList.toggle('on', on); }
+}
+
+function syncMobSrc(src) {
+  ['mobPillMeteo','mobPillElev'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  if(src === 'open-meteo') document.getElementById('mobPillMeteo')?.classList.add('active');
+  else document.getElementById('mobPillElev')?.classList.add('active');
+}
+
+function syncMobDs(ds) {
+  ['mobPillSrtm30','mobPillSrtm90','mobPillAster','mobPillMapzen'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  const map = {srtm30:'mobPillSrtm30',srtm90:'mobPillSrtm90',aster:'mobPillAster',mapzen:'mobPillMapzen'};
+  document.getElementById(map[ds])?.classList.add('active');
+}
+
+// Đóng popup khi bấm ra ngoài
+document.addEventListener('click', e => {
+  if(_mobOpen && !e.target.closest('.mob-toggle-group')) mobClose();
+});
 </script>
 </body>
 </html>
