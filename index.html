@@ -50,9 +50,11 @@ html, body {
 }
 
 /* 1. Search Area (Top Left) */
-.top-search-area { position: absolute; z-index: 1000; top: 10px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; align-items: flex-start; }
+.top-search-area { position: absolute; z-index: 1000; top: 10px; left: 10px; right: 10px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; align-items: flex-start; }
 .top-search-area > * { pointer-events: auto; }
-.search-wrap { flex: 0 1 auto; min-width: 0; }
+.search-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; pointer-events: none; }
+.search-row > * { pointer-events: auto; }
+.search-wrap { flex: 0 1 auto; min-width: 0; position: relative; display: flex; align-items: center; z-index: 1100; }
 .map-search { display: flex; align-items: center; padding: 0; height: 36px; }
 .map-search-input { flex: 1; height: 34px; background: transparent; border: none; padding: 0 6px 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--txt); outline: none; width: 230px; min-width: 0; }
 .map-search-input::placeholder { color: var(--m2); }
@@ -74,7 +76,7 @@ html, body {
 #mapGpsBtn.locating svg { animation: spin .8s linear infinite; }
 
 /* 2. Location Presets */
-.map-presets { position: static; z-index: 999; display: flex; gap: 4px; padding: 4px; width: 100%; overflow-x: auto; pointer-events: all; flex-shrink: 0; }
+.map-presets { position: static; z-index: 999; display: flex; gap: 4px; padding: 4px; width: auto; max-width: 100%; overflow-x: auto; pointer-events: all; flex: 0 0 auto; align-self: flex-start; }
 .pre-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid transparent; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 11.5px; font-weight: 500; color: var(--txt); transition: all .14s; white-space: nowrap; }
 .pre-btn:hover { background: var(--s2); color: var(--ac); border-color: var(--bd); }
 
@@ -188,41 +190,43 @@ html, body {
   <div id="map"></div>
 
   <div class="top-search-area" id="topSearchArea">
-    <div class="search-wrap">
-      <div class="floating-panel map-search">
-        <input class="map-search-input" id="mapSearchInput" type="text"
-          placeholder="Tìm địa danh hoặc nhập tọa độ..."
-          autocomplete="off"
-          oninput="onSearchInput(this.value)"
-          onkeydown="onSearchKeydown(event)"
-        >
-        <div class="map-search-actions">
-          <button class="map-search-btn clear-btn" id="btnClear" onclick="clearSearch()" title="Xóa">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-          <div class="btn-sep" id="btnSep"></div>
-          <button class="map-search-btn search-btn" onclick="triggerSearch()" title="Tìm kiếm">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </button>
+    <div class="search-row">
+      <div class="search-wrap">
+        <div class="floating-panel map-search">
+          <input class="map-search-input" id="mapSearchInput" type="text"
+            placeholder="Tìm địa danh hoặc nhập tọa độ..."
+            autocomplete="off"
+            oninput="onSearchInput(this.value)"
+            onkeydown="onSearchKeydown(event)"
+          >
+          <div class="map-search-actions">
+            <button class="map-search-btn clear-btn" id="btnClear" onclick="clearSearch()" title="Xóa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div class="btn-sep" id="btnSep"></div>
+            <button class="map-search-btn search-btn" onclick="triggerSearch()" title="Tìm kiếm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+          </div>
         </div>
+        <div class="ac-dropdown" id="acDropdown"></div>
       </div>
-      <div class="ac-dropdown" id="acDropdown"></div>
+
+      <button class="floating-panel icon-btn" id="btnPaste" onclick="doMapPaste()" title="Dán từ khay nhớ tạm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="2" width="6" height="4" rx="1.5"/>
+          <path d="M16 4h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1"/>
+          <path d="M9 12h6M9 16h4"/>
+        </svg>
+      </button>
+
+      <button class="floating-panel icon-btn" id="mapGpsBtn" onclick="doGPS()" title="Vị trí của tôi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          <circle cx="12" cy="12" r="8" opacity=".3"/>
+        </svg>
+      </button>
     </div>
-    
-    <button class="floating-panel icon-btn" id="btnPaste" onclick="doMapPaste()" title="Dán từ khay nhớ tạm">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="9" y="2" width="6" height="4" rx="1.5"/>
-        <path d="M16 4h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1"/>
-        <path d="M9 12h6M9 16h4"/>
-      </svg>
-    </button>
-    
-    <button class="floating-panel icon-btn" id="mapGpsBtn" onclick="doGPS()" title="Vị trí của tôi">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-        <circle cx="12" cy="12" r="8" opacity=".3"/>
-      </svg>
-    </button>
 
     <div class="floating-panel map-presets" id="mapPresets">
       <button class="pre-btn" onclick="setCoords(12.2459,109.1945)">Nha Trang</button>
